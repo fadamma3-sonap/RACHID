@@ -18,6 +18,13 @@
   --rouge:#B3261E; --rouge-fond:#FDECEA;
   --ambre:#9A6A00; --ambre-fond:#FDF6E3;
   --ok:#1C6B43; --ok-fond:#E9F4EE;
+  /* palette par famille de modules : chaque couleur a une version sombre
+     pour le texte sur blanc, une version claire pour le menu sur vert */
+  --f-or:#9A7420;     --f-or-bg:#FBF6EA;     --f-or-clair:#E0B86A;
+  --f-vert:#1C6B43;   --f-vert-bg:#E9F4EE;   --f-vert-clair:#6FC79A;
+  --f-bleu:#1F6E7A;   --f-bleu-bg:#E6F2F4;   --f-bleu-clair:#6CC2CE;
+  --f-terre:#B3522E;  --f-terre-bg:#FBEDE6;  --f-terre-clair:#EE9468;
+  --f-gris:#56646F;   --f-gris-bg:#EEF1F3;   --f-gris-clair:#A9BCC9;
   --r:10px; --ombre:0 1px 2px rgba(16,24,20,.06),0 4px 14px rgba(16,24,20,.05);
   --serif:Georgia,'Times New Roman',serif;
   --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
@@ -49,7 +56,9 @@ a{color:var(--vert-clair)}
 /* ===== STRUCTURE ===== */
 #app{display:none;min-height:100%}
 #app.actif{display:grid;grid-template-columns:232px minmax(0,1fr)}
-.barre{background:var(--vert);color:#D9E4DC;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0}
+.barre{background:linear-gradient(175deg,#17563A 0%,#0E3B24 42%,#071E15 100%);
+  color:#D9E4DC;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;
+  box-shadow:inset -1px 0 0 rgba(255,255,255,.06)}
 .barre-haut{padding:16px 14px 14px;border-bottom:1px solid rgba(255,255,255,.1);text-align:center}
 .barre-haut img{width:74px;filter:brightness(0) invert(1);opacity:.95}
 .barre-haut b{display:block;font-family:var(--serif);font-size:12.5px;letter-spacing:1.4px;color:#fff;margin-top:8px}
@@ -63,11 +72,24 @@ a{color:var(--vert-clair)}
 .ct-sel option{color:#1B1F1C}
 .ct-fixe{font-size:10px;letter-spacing:.8px;color:var(--or);text-transform:uppercase}
 nav{padding:10px 10px;flex:1;overflow-y:auto}
-nav button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 11px;border-radius:8px;color:#C7D5CC;font-size:13.5px;text-align:left;margin-bottom:2px}
+nav button{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:9px;color:#C7D5CC;font-size:13.5px;text-align:left;margin-bottom:2px;transition:.14s}
 nav button:hover{background:rgba(255,255,255,.07);color:#fff}
-nav button.on{background:rgba(201,163,92,.16);color:#fff;font-weight:600;box-shadow:inset 2px 0 0 var(--or)}
-nav button .ic{width:17px;text-align:center;opacity:.9}
-nav .sep{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.35);padding:14px 11px 5px}
+nav button:hover .ic{transform:scale(1.06)}
+nav button.on{background:rgba(255,255,255,.1);color:#fff;font-weight:600;box-shadow:inset 2px 0 0 var(--k,var(--or))}
+nav button .ic{width:25px;height:25px;flex:0 0 auto;display:grid;place-items:center;border-radius:7px;
+  font-size:13px;line-height:1;color:var(--k,var(--or));background:var(--kbg,rgba(201,163,92,.18));
+  box-shadow:inset 0 0 0 1px var(--kbd,rgba(201,163,92,.3));transition:.14s}
+/* familles : une couleur par groupe, reprise dans le menu et sur les cartes */
+.g-or   {--k:#E8C274;--kbg:rgba(232,194,116,.26);--kbd:rgba(232,194,116,.45)}
+.g-vert {--k:#7BD3A6;--kbg:rgba(123,211,166,.26);--kbd:rgba(123,211,166,.45)}
+.g-bleu {--k:#78CEDA;--kbg:rgba(120,206,218,.26);--kbd:rgba(120,206,218,.45)}
+.g-terre{--k:#F3A074;--kbg:rgba(243,160,116,.26);--kbd:rgba(243,160,116,.45)}
+.g-gris {--k:#B6C7D3;--kbg:rgba(182,199,211,.26);--kbd:rgba(182,199,211,.45)}
+nav button.on .ic{background:var(--k,var(--or));color:#07221A;box-shadow:none}
+nav .sep{display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;
+  color:rgba(255,255,255,.42);padding:15px 11px 6px}
+nav .sep::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.12)}
+nav .sep i{width:5px;height:5px;border-radius:50%;background:var(--k,var(--or));font-style:normal;flex:0 0 auto}
 .barre-bas{padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);font-size:12px}
 .barre-bas b{color:#fff;display:block;font-size:13px}
 .barre-bas span{color:var(--or)}
@@ -96,11 +118,38 @@ main{min-width:0;padding:22px 26px 56px}
 .g2{grid-template-columns:repeat(2,1fr)}
 .g21{grid-template-columns:1.6fr 1fr}
 
-.kpi{background:var(--blanc);border:1px solid var(--bord);border-radius:var(--r);padding:14px 15px;box-shadow:var(--ombre)}
+.kpi{position:relative;background:var(--blanc);border:1px solid var(--bord);border-radius:var(--r);
+  padding:14px 15px 14px 18px;box-shadow:var(--ombre);overflow:hidden}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--kc,var(--or))}
 .kpi .lab{font-size:11.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px}
-.kpi .val{font-family:var(--serif);font-size:25px;color:var(--vert);margin-top:5px;line-height:1.15}
+.kpi .val{font-family:var(--serif);font-size:25px;color:var(--kc,var(--vert));margin-top:5px;line-height:1.15}
 .kpi .sub{font-size:12px;color:var(--gris-clair);margin-top:3px}
-.kpi.alerte .val{color:var(--rouge)}
+.kpi.alerte{--kc:var(--rouge);background:linear-gradient(180deg,var(--rouge-fond) 0%,#fff 58%)}
+.kpi.k-or   {--kc:var(--f-or);   background:linear-gradient(180deg,var(--f-or-bg) 0%,#fff 58%)}
+.kpi.k-vert {--kc:var(--f-vert); background:linear-gradient(180deg,var(--f-vert-bg) 0%,#fff 58%)}
+.kpi.k-bleu {--kc:var(--f-bleu); background:linear-gradient(180deg,var(--f-bleu-bg) 0%,#fff 58%)}
+.kpi.k-terre{--kc:var(--f-terre);background:linear-gradient(180deg,var(--f-terre-bg) 0%,#fff 58%)}
+.kpi.k-gris {--kc:var(--f-gris); background:linear-gradient(180deg,var(--f-gris-bg) 0%,#fff 58%)}
+
+/* en-tête de carte : filet coloré discret devant le titre */
+.carte-t h3::before{content:"";display:inline-block;width:3px;height:13px;border-radius:2px;
+  background:var(--hc,var(--or));margin-right:8px;vertical-align:-2px}
+.carte.h-vert{--hc:var(--f-vert)} .carte.h-bleu{--hc:var(--f-bleu)}
+.carte.h-terre{--hc:var(--f-terre)} .carte.h-gris{--hc:var(--f-gris)}
+
+/* comparaison recettes / dépenses du tableau de bord */
+.barres{display:flex;flex-direction:column;gap:14px}
+.barre-l .t{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:5px}
+.barre-l .t b{font-variant-numeric:tabular-nums}
+.barre-l .p{height:12px;background:#F1F0EA;border-radius:6px;overflow:hidden}
+.barre-l .p span{display:block;height:100%;border-radius:6px;transition:width .4s}
+.barre-l.b-vert .p span{background:linear-gradient(90deg,#2E8C5C,#1C6B43)}
+.barre-l.b-vert .t b{color:var(--f-vert)}
+.barre-l.b-terre .p span{background:linear-gradient(90deg,#D97A4A,#B3522E)}
+.barre-l.b-terre .t b{color:var(--f-terre)}
+.solde-l{display:flex;justify-content:space-between;align-items:baseline;border-top:1px dashed var(--bord);
+  margin-top:4px;padding-top:12px;font-size:13.5px;font-weight:600}
+.solde-l b{font-family:var(--serif);font-size:19px}
 
 table{width:100%;border-collapse:collapse;font-size:13.5px}
 th{text-align:left;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--gris);font-weight:600;padding:0 10px 8px;border-bottom:1px solid var(--bord)}
@@ -330,8 +379,18 @@ var ROLES = {
   surveillant: {nom:"Surveillant",            ini:"SV", modules:["internat","eleves"]}
 };
 
+/* Une couleur par famille : la même teinte habille l'icône du menu et
+   les indicateurs du module, pour que l'œil retrouve son chemin. */
+var FAMILLES = {
+  "Pilotage":      "or",
+  "Finances":      "vert",
+  "Centre":        "bleu",
+  "Intendance":    "terre",
+  "Administration":"gris"
+};
+
 var MODULES = [
-  {id:"tableau",   nom:"Tableau de bord",   ic:"▣", grp:"Pilotage"},
+  {id:"tableau",   nom:"Tableau de bord",   ic:"◧", grp:"Pilotage"},
   {id:"rapports",  nom:"Rapports",          ic:"◫", grp:"Pilotage"},
   {id:"caisse",    nom:"Caisse et reçus",   ic:"₵", grp:"Finances"},
   {id:"depenses",  nom:"Dépenses",          ic:"▤", grp:"Finances"},
@@ -345,6 +404,10 @@ var MODULES = [
   {id:"journal",   nom:"Journal",           ic:"≡", grp:"Administration"},
   {id:"parametres",nom:"Paramètres",        ic:"⚙", grp:"Administration"}
 ];
+function famille(idModule){
+  for(var i = 0; i < MODULES.length; i++) if(MODULES[i].id === idModule) return FAMILLES[MODULES[i].grp] || "or";
+  return "or";
+}
 
 var MOIS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 
@@ -794,8 +857,12 @@ function construireMenu(){
   var ok = modulesAutorises(), h = "", grpPrec = "";
   MODULES.forEach(function(m){
     if(ok.indexOf(m.id) < 0) return;
-    if(m.grp !== grpPrec){ h += '<div class="sep">' + e(m.grp) + '</div>'; grpPrec = m.grp; }
-    h += '<button data-m="' + m.id + '" onclick="aller(\'' + m.id + '\')">' +
+    var g = "g-" + (FAMILLES[m.grp] || "or");
+    if(m.grp !== grpPrec){
+      h += '<div class="sep ' + g + '"><i></i>' + e(m.grp) + '</div>';
+      grpPrec = m.grp;
+    }
+    h += '<button class="' + g + '" data-m="' + m.id + '" onclick="aller(\'' + m.id + '\')">' +
          '<span class="ic">' + m.ic + '</span>' + e(m.nom) + '</button>';
   });
   document.getElementById("menu").innerHTML = h;
@@ -863,10 +930,10 @@ function vueTableau(){
   h += '<div class="bandeau"><b>Démonstration.</b> Les chiffres ci-dessous proviennent d\'un jeu de données fictif enregistré dans ce navigateur. Le bouton « Réinitialiser » dans Paramètres remet tout à zéro.</div>';
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
-    kpi("Élèves inscrits", eleves.length, internes + " internes · " + (eleves.length - internes) + " semi-internes") +
-    kpi("Recettes du mois", fmG(t.recettesMois), RECS().filter(function(r){return moisCourant(r.date);}).length + " reçus émis") +
-    kpi("Dépenses du mois", fmG(t.depensesMois), DEPS().filter(function(d){return moisCourant(d.date);}).length + " opérations") +
-    kpi("Solde général", fmG(t.solde), "recettes moins dépenses", t.solde < 0) +
+    kpi("Élèves inscrits", eleves.length, internes + " internes · " + (eleves.length - internes) + " semi-internes", false, "bleu") +
+    kpi("Recettes du mois", fmG(t.recettesMois), RECS().filter(function(r){return moisCourant(r.date);}).length + " reçus émis", false, "vert") +
+    kpi("Dépenses du mois", fmG(t.depensesMois), DEPS().filter(function(d){return moisCourant(d.date);}).length + " opérations", false, "terre") +
+    kpi("Solde général", fmG(t.solde), "recettes moins dépenses", t.solde < 0, "or") +
     '</div>';
 
   h += '<div class="grille g21">';
@@ -884,7 +951,7 @@ function vueTableau(){
       (o.m < 0 ? "− " : "+ ") + fm(Math.abs(o.m)) + '</td></tr>';
   }).join("");
 
-  h += '<div class="carte"><div class="carte-t"><h3>Dernières opérations</h3>' +
+  h += '<div class="carte h-vert"><div class="carte-t"><h3>Dernières opérations</h3>' +
        '<button class="btn min sec" onclick="aller(\'caisse\')">Voir la caisse</button></div>' +
        '<div class="carte-c" style="padding:10px 6px">' +
        (lignes ? '<table><thead><tr><th>Date</th><th>Libellé</th><th class="num">Montant</th></tr></thead><tbody>' + lignes + '</tbody></table>'
@@ -930,12 +997,57 @@ function vueTableau(){
   al += '<div class="alerte-l"><span class="puce v"></span><div><b>Suivi coranique à jour</b>' +
         '<small>' + mem.length + ' récitations enregistrées — moyenne ' + moy.toFixed(1) + '/20</small></div></div>';
 
-  h += '<div class="carte"><div class="carte-t"><h3>Alertes</h3></div><div class="carte-c" style="padding:6px 16px">' + al + '</div></div>';
+  h += '<div class="carte h-terre"><div class="carte-t"><h3>Alertes</h3></div><div class="carte-c" style="padding:6px 16px">' + al + '</div></div>';
+  h += '</div>';
+
+  /* équilibre du mois + répartition des dépenses, lisibles d'un coup d'œil */
+  var maxi = Math.max(t.recettesMois, t.depensesMois, 1);
+  var pr = Math.round(t.recettesMois / maxi * 100);
+  var pd = Math.round(t.depensesMois / maxi * 100);
+  var soldeMois = t.recettesMois - t.depensesMois;
+
+  h += '<div class="grille g2" style="margin-top:14px">';
+  h += '<div class="carte h-vert"><div class="carte-t"><h3>Équilibre du mois</h3>' +
+    '<span style="font-size:12px;color:var(--gris)">' + e(moisFr(new Date().toISOString().slice(0,7))) + '</span></div>' +
+    '<div class="carte-c"><div class="barres">' +
+      '<div class="barre-l b-vert"><div class="t"><span>Recettes encaissées</span><b>' + e(fmG(t.recettesMois)) + '</b></div>' +
+        '<div class="p"><span style="width:' + pr + '%"></span></div></div>' +
+      '<div class="barre-l b-terre"><div class="t"><span>Dépenses engagées</span><b>' + e(fmG(t.depensesMois)) + '</b></div>' +
+        '<div class="p"><span style="width:' + pd + '%"></span></div></div>' +
+      '<div class="solde-l"><span>' + (soldeMois >= 0 ? "Excédent du mois" : "Déficit du mois") + '</span>' +
+        '<b style="color:' + (soldeMois >= 0 ? "var(--f-vert)" : "var(--rouge)") + '">' + e(fmG(Math.abs(soldeMois))) + '</b></div>' +
+    '</div>' +
+    '<div class="apercu" style="margin-top:14px">' +
+      (t.depensesMois
+        ? 'Les recettes du mois couvrent <b>' + Math.round(t.recettesMois / t.depensesMois * 100) + ' %</b> des dépenses engagées.'
+        : 'Aucune dépense engagée ce mois-ci.') +
+    '</div></div></div>';
+
+  var depMois = DEPS().filter(function(x){ return moisCourant(x.date); });
+  var pc = {};
+  depMois.forEach(function(x){ pc[x.categorie] = (pc[x.categorie] || 0) + x.montant; });
+  var cls = Object.keys(pc).sort(function(a,b){ return pc[b] - pc[a]; }).slice(0,5);
+  var teintes = ["var(--f-terre)","var(--f-or)","var(--f-bleu)","var(--f-vert)","var(--f-gris)"];
+  var lp = cls.map(function(k, i){
+    var pct = t.depensesMois ? Math.round(pc[k] / t.depensesMois * 100) : 0;
+    return '<tr><td style="width:14px"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:' + teintes[i] + '"></span></td>' +
+      '<td>' + e(k) + '</td><td class="num">' + fm(pc[k]) + '</td>' +
+      '<td style="width:34%"><div class="jauge"><span style="width:' + pct + '%;background:' + teintes[i] + '"></span></div></td>' +
+      '<td class="num" style="width:40px">' + pct + ' %</td></tr>';
+  }).join("");
+
+  h += '<div class="carte h-terre"><div class="carte-t"><h3>Où part l\'argent ce mois</h3>' +
+    '<button class="btn min sec" onclick="aller(\'rapports\')">Rapports</button></div>' +
+    '<div class="carte-c" style="padding:10px 6px">' +
+    (lp ? '<table><tbody>' + lp + '</tbody></table>' : '<div class="vide">Aucune dépense ce mois-ci.</div>') +
+    '</div></div>';
   h += '</div>';
   return h;
 }
-function kpi(lab, val, sub, alerte){
-  return '<div class="kpi' + (alerte ? " alerte" : "") + '"><div class="lab">' + e(lab) + '</div>' +
+/* couleur : "or" | "vert" | "bleu" | "terre" | "gris" — l'alerte l'emporte */
+function kpi(lab, val, sub, alerte, couleur){
+  var cl = alerte ? " alerte" : (couleur ? " k-" + couleur : "");
+  return '<div class="kpi' + cl + '"><div class="lab">' + e(lab) + '</div>' +
          '<div class="val">' + e(val) + '</div><div class="sub">' + e(sub) + '</div></div>';
 }
 
@@ -947,9 +1059,9 @@ function vueCaisse(){
     '<button class="btn" onclick="formRecu()">+ Nouveau reçu</button>');
 
   h += '<div class="grille g3" style="margin-bottom:14px">' +
-    kpi("Total encaissé", fmG(t.recettes), recus.length + " reçus émis") +
-    kpi("Encaissé ce mois", fmG(t.recettesMois), "mois en cours") +
-    kpi("Impayés", impayes().length + " élèves", "frais non soldés", impayes().length > 0) +
+    kpi("Total encaissé", fmG(t.recettes), recus.length + " reçus émis", false, "vert") +
+    kpi("Encaissé ce mois", fmG(t.recettesMois), "mois en cours", false, "vert") +
+    kpi("Impayés", impayes().length + " élèves", "frais non soldés", impayes().length > 0, "or") +
     '</div>';
 
   var lignes = recus.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; }).map(function(r){
@@ -1133,9 +1245,9 @@ function vueDepenses(){
   var cats = Object.keys(parCat).sort(function(a,b){ return parCat[b] - parCat[a]; });
 
   h += '<div class="grille g3" style="margin-bottom:14px">' +
-    kpi("Total des dépenses", fmG(t.depenses), deps.length + " opérations") +
-    kpi("Dépenses du mois", fmG(t.depensesMois), "mois en cours") +
-    kpi("Premier poste", cats[0] || "—", cats[0] ? fmG(parCat[cats[0]]) : "—") +
+    kpi("Total des dépenses", fmG(t.depenses), deps.length + " opérations", false, "terre") +
+    kpi("Dépenses du mois", fmG(t.depensesMois), "mois en cours", false, "terre") +
+    kpi("Premier poste", cats[0] || "—", cats[0] ? fmG(parCat[cats[0]]) : "—", false, "terre") +
     '</div>';
 
   var lignes = deps.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; }).map(function(d){
@@ -1331,9 +1443,9 @@ function vueCoran(){
   var mem = MEMS();
   var moy = mem.reduce(function(a,m){ return a + m.note; }, 0) / (mem.length || 1);
   h += '<div class="grille g3" style="margin-bottom:14px">' +
-    kpi("Récitations", mem.length, "enregistrées au total") +
-    kpi("Moyenne générale", moy.toFixed(1) + " / 20", "toutes classes confondues") +
-    kpi("Élèves suivis", uniq(mem.map(function(m){ return m.eleve; })).length, "sur " + ELS().length + " inscrits") +
+    kpi("Récitations", mem.length, "enregistrées au total", false, "bleu") +
+    kpi("Moyenne générale", moy.toFixed(1) + " / 20", "toutes classes confondues", false, "bleu") +
+    kpi("Élèves suivis", uniq(mem.map(function(m){ return m.eleve; })).length, "sur " + ELS().length + " inscrits", false, "bleu") +
     '</div>';
 
   var lignes = mem.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; }).map(function(m){
@@ -1397,8 +1509,8 @@ function vueStock(){
     '<button class="btn" onclick="formMouvement()">+ Mouvement de stock</button>');
 
   h += '<div class="grille g3" style="margin-bottom:14px">' +
-    kpi("Articles suivis", stk.length, uniq(stk.map(function(s){ return s.categorie; })).length + " catégories") +
-    kpi("Valeur du stock", fmG(valeur), "au prix d'achat") +
+    kpi("Articles suivis", stk.length, uniq(stk.map(function(s){ return s.categorie; })).length + " catégories", false, "terre") +
+    kpi("Valeur du stock", fmG(valeur), "au prix d'achat", false, "terre") +
     kpi("Alertes", bas.length + " article" + (bas.length>1?"s":""), "sous le seuil minimum", bas.length > 0) +
     '</div>';
 
@@ -1471,9 +1583,9 @@ function vuePersonnel(){
     '<button class="btn" onclick="formEmploye()">+ Nouvel employé</button>');
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
-    kpi("Effectif actif", pers.filter(function(p){ return p.statut === "actif"; }).length, uniq(pers.map(function(p){ return p.type; })).length + " catégories") +
-    kpi("Masse salariale", fmG(masse), "par mois, postes actifs") +
-    kpi("Payés ce mois", payesCeMois.length + " / " + pers.filter(function(p){ return p.statut === "actif"; }).length, fmG(payesCeMois.reduce(function(a,y){ return a + y.net; }, 0)) + " versés") +
+    kpi("Effectif actif", pers.filter(function(p){ return p.statut === "actif"; }).length, uniq(pers.map(function(p){ return p.type; })).length + " catégories", false, "bleu") +
+    kpi("Masse salariale", fmG(masse), "par mois, postes actifs", false, "bleu") +
+    kpi("Payés ce mois", payesCeMois.length + " / " + pers.filter(function(p){ return p.statut === "actif"; }).length, fmG(payesCeMois.reduce(function(a,y){ return a + y.net; }, 0)) + " versés", false, "vert") +
     kpi("Restent à payer", reste.length, reste.length ? "salaires du mois en cours" : "tout le monde est payé", reste.length > 0) +
     '</div>';
 
@@ -1694,9 +1806,9 @@ function vueInternat(){
     '<button class="btn" onclick="formIncident()">+ Signaler un incident</button>');
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
-    kpi("Pensionnaires", internes.length, "élèves internes") +
-    kpi("Capacité", capacite + " lits", chambres.length + " chambres") +
-    kpi("Taux d'occupation", capacite ? Math.round(internes.length / capacite * 100) + " %" : "—", capacite - internes.length + " places libres") +
+    kpi("Pensionnaires", internes.length, "élèves internes", false, "terre") +
+    kpi("Capacité", capacite + " lits", chambres.length + " chambres", false, "terre") +
+    kpi("Taux d'occupation", capacite ? Math.round(internes.length / capacite * 100) + " %" : "—", capacite - internes.length + " places libres", false, "terre") +
     kpi("Dernier appel", dernier ? dateFr(dernier.date) : "—", dernier ? dernier.presents + " présents · " + dernier.absents + " absents" : "aucun appel", dernier && dernier.absents > 0) +
     '</div>';
 
@@ -1887,10 +1999,10 @@ function vueCuisine(){
   h += '<div class="bandeau"><b>Lecture du coût.</b> Les montants ci-dessous ne sont pas saisis : ils sont calculés à partir des denrées réellement sorties du magasin vers la cuisine, valorisées au prix d\'achat. Si les sorties ne sont pas saisies chaque jour, ces chiffres perdent leur sens.</div>';
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
-    kpi("Repas servis", repasServis, jours.length + " jour" + (jours.length>1?"s":"") + " de service") +
-    kpi("Denrées consommées", fmG(cout), "sorties valorisées au prix d'achat") +
-    kpi("Coût moyen par repas", fmG(Math.round(coutRepas)), "toutes catégories confondues") +
-    kpi("Coût par convive", fmG(Math.round(coutConvive)), convives + " couverts servis") +
+    kpi("Repas servis", repasServis, jours.length + " jour" + (jours.length>1?"s":"") + " de service", false, "terre") +
+    kpi("Denrées consommées", fmG(cout), "sorties valorisées au prix d'achat", false, "terre") +
+    kpi("Coût moyen par repas", fmG(Math.round(coutRepas)), "toutes catégories confondues", false, "or") +
+    kpi("Coût par convive", fmG(Math.round(coutConvive)), convives + " couverts servis", false, "or") +
     '</div>';
 
   h += '<div class="grille g21">';
@@ -2015,9 +2127,9 @@ function vueDons(){
     '<button class="btn" onclick="formDon()">+ Enregistrer un don</button>');
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
-    kpi("Total reçu", fmG(recu), xs.length + " versements") +
-    kpi("Engagements mensuels", fmG(engage), gs.filter(function(g){ return g.engagement > 0; }).length + " parrains réguliers") +
-    kpi("Reçu ce mois", fmG(recuCeMois), moisFr(moisEnCours)) +
+    kpi("Total reçu", fmG(recu), xs.length + " versements", false, "vert") +
+    kpi("Engagements mensuels", fmG(engage), gs.filter(function(g){ return g.engagement > 0; }).length + " parrains réguliers", false, "vert") +
+    kpi("Reçu ce mois", fmG(recuCeMois), moisFr(moisEnCours), false, "vert") +
     kpi("Reste à percevoir", fmG(attendu), attendu ? "sur les engagements du mois" : "engagements honorés", attendu > 0) +
     '</div>';
 
@@ -2290,10 +2402,10 @@ function vueRapports(){
     '</div>';
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
-    kpi("Recettes", fmG(R.totalRec), R.rec.length + " encaissements") +
-    kpi("Dépenses", fmG(R.totalDep), R.dep.length + " opérations") +
-    kpi("Résultat", fmG(R.solde), R.solde >= 0 ? "excédent sur la période" : "déficit sur la période", R.solde < 0) +
-    kpi("Élèves inscrits", ELS().length, impayes().length + " en impayé") +
+    kpi("Recettes", fmG(R.totalRec), R.rec.length + " encaissements", false, "vert") +
+    kpi("Dépenses", fmG(R.totalDep), R.dep.length + " opérations", false, "terre") +
+    kpi("Résultat", fmG(R.solde), R.solde >= 0 ? "excédent sur la période" : "déficit sur la période", R.solde < 0, "or") +
+    kpi("Élèves inscrits", ELS().length, impayes().length + " en impayé", false, "bleu") +
     '</div>';
 
   h += '<div class="grille g2">';
@@ -2546,8 +2658,8 @@ function vueParametres(){
   h += '<div class="carte"><div class="carte-t"><h3>Données de démonstration</h3></div><div class="carte-c">' +
     '<p style="font-size:13.5px;color:var(--gris);margin-bottom:14px">Tout ce que vous saisissez reste dans ce navigateur, sur cet appareil. Rien n\'est envoyé sur internet. En production, les données seront centralisées et protégées par rôle.</p>' +
     '<div class="grille g2" style="margin-bottom:14px">' +
-      kpi("Élèves", ELS().length, "enregistrés") +
-      kpi("Reçus", RECS().length, "émis") +
+      kpi("Élèves", ELS().length, "enregistrés", false, "bleu") +
+      kpi("Reçus", RECS().length, "émis", false, "vert") +
     '</div>' +
     '<button class="btn sec" onclick="exporterJson()">Exporter les données (JSON)</button> ' +
     '<button class="btn sec" style="color:var(--rouge);border-color:#E9C9C6" onclick="reinitialiser()">Réinitialiser la démonstration</button>' +
