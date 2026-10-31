@@ -126,6 +126,15 @@ main{min-width:0;padding:22px 26px 56px}
 .btn.sec:hover{border-color:var(--or);background:var(--or-fond)}
 .btn.or{background:var(--or);color:#2A1D05}
 .btn.min{padding:5px 11px;font-size:12.5px;font-weight:500}
+.btn.sup{background:var(--blanc);color:var(--rouge);border:1px solid #E8B5AD;padding:5px 9px;font-weight:700;line-height:1}
+.btn.sup:hover{background:var(--rouge);color:#fff;border-color:var(--rouge)}
+.btn.dang{background:var(--rouge);color:#fff}
+.btn.dang:hover{background:#7E140C}
+.danger{background:var(--rouge-fond);border:1px solid #E8B5AD;border-left:4px solid var(--rouge);
+  border-radius:var(--r);padding:13px 15px;font-size:13.5px;color:#5E1009}
+.danger b{display:block;margin-bottom:5px;color:var(--rouge)}
+.danger p{margin:0}
+.actions{white-space:nowrap;display:flex;gap:6px;justify-content:flex-end}
 
 .carte{background:var(--blanc);border:1px solid var(--bord);border-radius:var(--r);box-shadow:var(--ombre)}
 .carte-t{padding:13px 16px;border-bottom:1px solid var(--bord);display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -220,6 +229,7 @@ tbody tr:hover{background:#FAFAF7}
 .apercu b{color:var(--vert)}
 
 .alerte-l{display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #F0EFE9;font-size:13.5px}
+.alerte-l > div{min-width:0}
 .alerte-l:last-child{border-bottom:0}
 .puce{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:0 0 auto}
 .puce.r{background:var(--rouge)}.puce.a{background:var(--ambre)}.puce.v{background:var(--ok)}
@@ -1018,7 +1028,9 @@ function vueTableau(){
 
   var h = tete("Tableau de bord", CT().ville + " — année scolaire " + CT().annee + " — " + dateLongue());
 
-  h += '<div class="bandeau"><b>Démonstration.</b> Les chiffres ci-dessous proviennent d\'un jeu de données fictif enregistré dans ce navigateur. Le bouton « Réinitialiser » dans Paramètres remet tout à zéro.</div>';
+  h += compterCentre(D.centreActif)
+    ? '<div class="bandeau"><b>Démonstration.</b> Les chiffres ci-dessous proviennent d\'un jeu de données fictif enregistré dans ce navigateur. Les boutons de remise à zéro sont dans Paramètres.</div>'
+    : '<div class="bandeau"><b>Base vierge.</b> Ce centre ne contient aucune donnée. Commencez par inscrire les élèves, puis enregistrez les premiers encaissements. Le jeu de démonstration se retrouve dans Paramètres.</div>';
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
     kpi("Élèves inscrits", eleves.length, internes + " internes · " + (eleves.length - internes) + " semi-internes", false, "bleu", "☗") +
@@ -1084,9 +1096,13 @@ function vueTableau(){
           '<small>' + e(incRecents.map(function(i){ return i.type; }).join(", ")) + '</small></div></div>';
   }
   var mem = MEMS();
-  var moy = mem.reduce(function(a,m){ return a + m.note; }, 0) / (mem.length || 1);
-  al += '<div class="alerte-l a-v"><span class="puce v"></span><div><b>Suivi coranique à jour</b>' +
-        '<small>' + mem.length + ' récitations enregistrées — moyenne ' + moy.toFixed(1) + '/20</small></div></div>';
+  if(mem.length){
+    var moy = mem.reduce(function(a,m){ return a + m.note; }, 0) / mem.length;
+    al += '<div class="alerte-l a-v"><span class="puce v"></span><div><b>Suivi coranique à jour</b>' +
+          '<small>' + mem.length + ' récitation' + (mem.length>1?"s":"") + ' enregistrée' + (mem.length>1?"s":"") +
+          ' — moyenne ' + moy.toFixed(1) + '/20</small></div></div>';
+  }
+  if(!al) al = '<div class="vide">Rien à signaler pour le moment.</div>';
 
   h += '<div class="carte h-or"><div class="carte-t"><h3>Alertes</h3></div><div class="carte-c" style="padding:6px 16px">' + al + '</div></div>';
   h += '</div>';
@@ -1165,7 +1181,8 @@ function vueCaisse(){
       '<td>' + e(r.motif) + '</td>' +
       '<td><span class="et g">' + e(r.mode) + '</span></td>' +
       '<td class="num"><b>' + fm(r.montant) + '</b></td>' +
-      '<td class="num"><button class="btn min sec" onclick="voirRecu(\'' + e(r.no) + '\')">Reçu</button></td></tr>';
+      '<td><div class="actions"><button class="btn min sec" onclick="voirRecu(\'' + e(r.no) + '\')">Reçu</button>' +
+      btnSuppr('supprimerRecu(\'' + e(r.no) + '\')') + '</div></td></tr>';
   }).join("");
 
   h += '<div class="carte h-vert"><div class="carte-t"><h3>Journal des reçus</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
@@ -1349,11 +1366,12 @@ function vueDepenses(){
     return '<tr><td>' + dateFr(d.date) + '</td><td><span class="et g">' + e(d.categorie) + '</span></td>' +
       '<td>' + e(d.libelle) + '</td><td>' + e(d.fournisseur) + '</td>' +
       '<td><span class="et g">' + e(d.mode) + '</span></td>' +
-      '<td class="num"><b>' + fm(d.montant) + '</b></td></tr>';
+      '<td class="num"><b>' + fm(d.montant) + '</b></td>' +
+      '<td><div class="actions">' + btnSuppr('supprimerDepense(\'' + d.id + '\')') + '</div></td></tr>';
   }).join("");
 
   h += '<div class="carte h-terre"><div class="carte-t"><h3>Journal des dépenses</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
-    (lignes ? '<table><thead><tr><th>Date</th><th>Catégorie</th><th>Libellé</th><th>Fournisseur</th><th>Mode</th><th class="num">Montant</th></tr></thead><tbody>' + lignes + '</tbody></table>'
+    (lignes ? '<table><thead><tr><th>Date</th><th>Catégorie</th><th>Libellé</th><th>Fournisseur</th><th>Mode</th><th class="num">Montant</th><th></th></tr></thead><tbody>' + lignes + '</tbody></table>'
             : '<div class="vide">Aucune dépense enregistrée.</div>') + '</div></div>';
   return h;
 }
@@ -1436,7 +1454,8 @@ function filtrerEleves(){
       '<td><span class="et ' + (el.statut === "interne" ? "v" : "g") + '">' + e(el.statut) + '</span></td>' +
       '<td>' + e(el.tuteur) + '<br><small style="color:var(--gris)">' + e(el.tel) + '</small></td>' +
       '<td class="num">' + fm(el.frais) + '</td><td class="num">' + fm(p) + '</td><td>' + et + '</td>' +
-      '<td class="num"><button class="btn min sec" onclick="ficheEleve(\'' + el.id + '\')">Fiche</button></td></tr>';
+      '<td><div class="actions"><button class="btn min sec" onclick="ficheEleve(\'' + el.id + '\')">Fiche</button>' +
+      btnSuppr('supprimerEleve(\'' + el.id + '\')') + '</div></td></tr>';
   }).join("");
   document.getElementById("tb-eleves").innerHTML = h || '<tr><td colspan="8" class="vide">Aucun élève ne correspond à cette recherche.</td></tr>';
 }
@@ -1548,11 +1567,12 @@ function vueCoran(){
     return '<tr><td>' + dateFr(m.date) + '</td><td><b>' + e(nomEleve(m.eleve)) + '</b></td>' +
       '<td>' + e(m.sourate) + '</td><td>pages ' + e(m.pages) + '</td>' +
       '<td>' + e(m.tajwid) + '</td><td>' + e(m.enseignant) + '</td>' +
-      '<td class="num"><span class="et ' + cl + '">' + m.note + '/20</span></td></tr>';
+      '<td class="num"><span class="et ' + cl + '">' + m.note + '/20</span></td>' +
+      '<td><div class="actions">' + btnSuppr('supprimerMemo(\'' + m.id + '\')') + '</div></td></tr>';
   }).join("");
 
   h += '<div class="carte h-bleu"><div class="carte-t"><h3>Dernières récitations</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
-    (lignes ? '<table><thead><tr><th>Date</th><th>Élève</th><th>Sourate</th><th>Pages</th><th>Tajwid</th><th>Enseignant</th><th class="num">Note</th></tr></thead><tbody>' + lignes + '</tbody></table>'
+    (lignes ? '<table><thead><tr><th>Date</th><th>Élève</th><th>Sourate</th><th>Pages</th><th>Tajwid</th><th>Enseignant</th><th class="num">Note</th><th></th></tr></thead><tbody>' + lignes + '</tbody></table>'
             : '<div class="vide">Aucune récitation enregistrée.</div>') + '</div></div>';
   return h;
 }
@@ -1614,11 +1634,12 @@ function vueStock(){
     return '<tr><td><b>' + e(s.article) + '</b></td><td><span class="et g">' + e(s.categorie) + '</span></td>' +
       '<td class="num">' + s.qte + ' ' + e(s.unite) + '</td><td class="num">' + s.min + '</td>' +
       '<td class="num">' + fm(s.prix) + '</td>' +
-      '<td>' + (sous ? '<span class="et r">À réapprovisionner</span>' : '<span class="et v">Suffisant</span>') + '</td></tr>';
+      '<td>' + (sous ? '<span class="et r">À réapprovisionner</span>' : '<span class="et v">Suffisant</span>') + '</td>' +
+      '<td><div class="actions">' + btnSuppr('supprimerArticle(\'' + s.id + '\')') + '</div></td></tr>';
   }).join("");
 
   h += '<div class="carte h-terre"><div class="carte-t"><h3>État du magasin</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
-    '<table><thead><tr><th>Article</th><th>Catégorie</th><th class="num">En stock</th><th class="num">Seuil</th><th class="num">Prix unitaire</th><th>État</th></tr></thead><tbody>' +
+    '<table><thead><tr><th>Article</th><th>Catégorie</th><th class="num">En stock</th><th class="num">Seuil</th><th class="num">Prix unitaire</th><th>État</th><th></th></tr></thead><tbody>' +
     lignes + '</tbody></table></div></div>';
   return h;
 }
@@ -1694,7 +1715,8 @@ function vuePersonnel(){
       '<td class="num">' + fm(p.salaire) + '</td>' +
       '<td class="num">' + (nbAbs ? nbAbs : "—") + '</td>' +
       '<td>' + (paye ? '<span class="et v">Payé le ' + dateFr(paye.date) + '</span>' : '<span class="et a">En attente</span>') + '</td>' +
-      '<td class="num"><button class="btn min sec" onclick="fichePersonnel(\'' + p.id + '\')">Fiche</button></td></tr>';
+      '<td><div class="actions"><button class="btn min sec" onclick="fichePersonnel(\'' + p.id + '\')">Fiche</button>' +
+      btnSuppr('supprimerEmploye(\'' + p.id + '\')') + '</div></td></tr>';
   }).join("");
 
   h += '<div class="carte h-bleu"><div class="carte-t"><h3>Dossiers du personnel</h3></div>' +
@@ -1707,12 +1729,13 @@ function vuePersonnel(){
     var cl = a.type === "Congé" ? "g" : (a.justifiee ? "a" : "r");
     return '<tr><td>' + dateFr(a.date) + '</td><td><b>' + e(nomPersonnel(a.personnel)) + '</b></td>' +
       '<td><span class="et ' + cl + '">' + e(a.type) + '</span></td><td>' + e(a.motif) + '</td>' +
-      '<td>' + (a.justifiee ? "Justifiée" : "Non justifiée") + '</td></tr>';
+      '<td>' + (a.justifiee ? "Justifiée" : "Non justifiée") + '</td>' +
+      '<td><div class="actions">' + btnSuppr('supprimerAbsence(\'' + a.id + '\')') + '</div></td></tr>';
   }).join("");
 
   h += '<div class="carte h-or" style="margin-top:14px"><div class="carte-t"><h3>Absences, retards et congés</h3></div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
-    (la ? '<table><thead><tr><th>Date</th><th>Employé</th><th>Type</th><th>Motif</th><th>Statut</th></tr></thead><tbody>' + la + '</tbody></table>'
+    (la ? '<table><thead><tr><th>Date</th><th>Employé</th><th>Type</th><th>Motif</th><th>Statut</th><th></th></tr></thead><tbody>' + la + '</tbody></table>'
         : '<div class="vide">Aucune absence enregistrée.</div>') + '</div></div>';
   return h;
 }
@@ -1916,13 +1939,14 @@ function vueInternat(){
     return '<tr><td><b>' + e(ch.nom) + '</b><br><small style="color:var(--gris)">' + e(ch.bloc) + '</small></td>' +
       '<td class="num">' + occ.length + " / " + ch.capacite + '</td>' +
       '<td>' + (noms || '<span style="color:var(--gris-clair)">chambre vide</span>') + '</td>' +
-      '<td>' + (libres > 0 ? '<span class="et v">' + libres + ' place' + (libres>1?"s":"") + '</span>' : '<span class="et a">complète</span>') + '</td></tr>';
+      '<td>' + (libres > 0 ? '<span class="et v">' + libres + ' place' + (libres>1?"s":"") + '</span>' : '<span class="et a">complète</span>') + '</td>' +
+      '<td><div class="actions">' + btnSuppr('supprimerChambre(\'' + ch.id + '\')') + '</div></td></tr>';
   }).join("");
 
   h += '<div class="carte h-terre"><div class="carte-t"><h3>Chambres et affectations</h3>' +
     '<button class="btn min sec" onclick="formAffectation()">Affecter un élève</button></div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
-    (lignes ? '<table><thead><tr><th>Chambre</th><th class="num">Occupation</th><th>Pensionnaires</th><th>État</th></tr></thead><tbody>' + lignes + '</tbody></table>'
+    (lignes ? '<table><thead><tr><th>Chambre</th><th class="num">Occupation</th><th>Pensionnaires</th><th>État</th><th></th></tr></thead><tbody>' + lignes + '</tbody></table>'
             : '<div class="vide">Aucune chambre enregistrée.</div>') + '</div></div>';
 
   var nonAffectes = internes.filter(function(x){ return !x.chambre; });
@@ -1935,7 +1959,9 @@ function vueInternat(){
     var p = i.type === "Santé" ? "r" : (i.type === "Discipline" ? "a" : "v");
     ai += '<div class="alerte-l a-' + p + '"><span class="puce ' + p + '"></span><div><b>' + e(i.type) + ' — ' + e(nomEleve(i.eleve)) + '</b>' +
       '<small>' + dateFr(i.date) + " · " + e(i.description) + '</small>' +
-      '<small style="color:var(--vert-clair)">Suite : ' + e(i.suite) + '</small></div></div>';
+      '<small style="color:var(--vert-clair)">Suite : ' + e(i.suite) + '</small></div>' +
+      (peutSupprimer() ? '<button class="btn min sup" style="margin-left:auto" title="Supprimer" onclick="supprimerIncident(\'' + i.id + '\')">✕</button>' : "") +
+      '</div>';
   });
   if(!ai) ai = '<div class="vide">Aucun incident signalé.</div>';
 
@@ -1946,12 +1972,13 @@ function vueInternat(){
   var la = appels.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; }).slice(0,6).map(function(a){
     return '<tr><td>' + dateFr(a.date) + '</td><td class="num">' + a.presents + '</td>' +
       '<td class="num">' + (a.absents ? '<span class="et r">' + a.absents + '</span>' : '<span class="et v">0</span>') + '</td>' +
-      '<td>' + e(a.note) + '</td></tr>';
+      '<td>' + e(a.note) + '</td>' +
+      '<td><div class="actions">' + btnSuppr('supprimerAppel(\'' + a.id + '\')') + '</div></td></tr>';
   }).join("");
 
   h += '<div class="carte" style="margin-top:14px"><div class="carte-t"><h3>Appels du soir</h3></div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
-    (la ? '<table><thead><tr><th>Date</th><th class="num">Présents</th><th class="num">Absents</th><th>Observation</th></tr></thead><tbody>' + la + '</tbody></table>'
+    (la ? '<table><thead><tr><th>Date</th><th class="num">Présents</th><th class="num">Absents</th><th>Observation</th><th></th></tr></thead><tbody>' + la + '</tbody></table>'
         : '<div class="vide">Aucun appel enregistré.</div>') + '</div></div>';
   return h;
 }
@@ -2104,13 +2131,14 @@ function vueCuisine(){
 
   var lm = menus.slice().sort(function(a,b){ return a.date < b.date ? 1 : (a.date > b.date ? -1 : 0); }).map(function(m){
     return '<tr><td>' + dateFr(m.date) + '</td><td><span class="et g">' + e(m.repas) + '</span></td>' +
-      '<td><b>' + e(m.plat) + '</b></td><td class="num">' + m.convives + '</td></tr>';
+      '<td><b>' + e(m.plat) + '</b></td><td class="num">' + m.convives + '</td>' +
+      '<td><div class="actions">' + btnSuppr('supprimerMenu(\'' + m.id + '\')') + '</div></td></tr>';
   }).join("");
 
   h += '<div class="carte h-terre"><div class="carte-t"><h3>Menus planifiés et servis</h3>' +
     '<span style="font-size:12px;color:var(--gris)">coût journalier moyen ' + e(fmG(Math.round(coutJour))) + '</span></div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
-    (lm ? '<table><thead><tr><th>Date</th><th>Repas</th><th>Plat</th><th class="num">Convives</th></tr></thead><tbody>' + lm + '</tbody></table>'
+    (lm ? '<table><thead><tr><th>Date</th><th>Repas</th><th>Plat</th><th class="num">Convives</th><th></th></tr></thead><tbody>' + lm + '</tbody></table>'
         : '<div class="vide">Aucun menu planifié.</div>') + '</div></div>';
 
   var sorties = MVT().filter(function(v){ return v.type === "sortie" && v.destination === "Cuisine"; })
@@ -2119,12 +2147,13 @@ function vueCuisine(){
     var a = parId(D.stock, v.article);
     return '<tr><td>' + dateFr(v.date) + '</td><td>' + e(nomArticle(v.article)) + '</td>' +
       '<td class="num">' + v.qte + " " + e(a ? a.unite : "") + '</td>' +
-      '<td class="num">' + fm(a ? v.qte * a.prix : 0) + '</td></tr>';
+      '<td class="num">' + fm(a ? v.qte * a.prix : 0) + '</td>' +
+      '<td><div class="actions">' + btnSuppr('supprimerMouvement(\'' + v.id + '\')') + '</div></td></tr>';
   }).join("");
 
   h += '<div class="carte h-or"><div class="carte-t"><h3>Denrées sorties vers la cuisine</h3></div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
-    (ls ? '<table><thead><tr><th>Date</th><th>Article</th><th class="num">Quantité</th><th class="num">Valeur</th></tr></thead><tbody>' + ls + '</tbody></table>'
+    (ls ? '<table><thead><tr><th>Date</th><th>Article</th><th class="num">Quantité</th><th class="num">Valeur</th><th></th></tr></thead><tbody>' + ls + '</tbody></table>'
         : '<div class="vide">Aucune sortie enregistrée.</div>') + '</div></div>';
   h += '</div>';
 
@@ -2239,7 +2268,8 @@ function vueDons(){
       '<td class="num"><b>' + fm(tot) + '</b></td>' +
       '<td>' + (dernier ? dateFr(dernier.date) : "—") + '</td>' +
       '<td>' + (g.engagement ? (aJour ? '<span class="et v">À jour</span>' : '<span class="et a">En retard</span>') : '<span class="et g">—</span>') + '</td>' +
-      '<td class="num"><button class="btn min sec" onclick="ficheDonateur(\'' + g.id + '\')">Fiche</button></td></tr>';
+      '<td><div class="actions"><button class="btn min sec" onclick="ficheDonateur(\'' + g.id + '\')">Fiche</button>' +
+      btnSuppr('supprimerDonateur(\'' + g.id + '\')') + '</div></td></tr>';
   }).join("");
 
   h += '<div class="carte h-vert"><div class="carte-t"><h3>Donateurs et parrains</h3></div>' +
@@ -2252,7 +2282,8 @@ function vueDons(){
     return '<tr><td>' + dateFr(x.date) + '</td><td><b>' + e(nomDonateur(x.donateur)) + '</b></td>' +
       '<td>' + e(x.affectation) + '</td><td><span class="et g">' + e(x.mode) + '</span></td>' +
       '<td class="num"><b>' + fm(x.montant) + '</b></td>' +
-      '<td class="num">' + (x.recu ? '<button class="btn min sec" onclick="voirRecu(\'' + e(x.recu) + '\')">Reçu</button>' : '<span style="color:var(--gris-clair);font-size:12px">sans reçu</span>') + '</td></tr>';
+      '<td><div class="actions">' + (x.recu ? '<button class="btn min sec" onclick="voirRecu(\'' + e(x.recu) + '\')">Reçu</button>' : '<span style="color:var(--gris-clair);font-size:12px;align-self:center">sans reçu</span>') +
+      btnSuppr('supprimerDon(\'' + x.id + '\')') + '</div></td></tr>';
   }).join("");
 
   h += '<div class="carte" style="margin-top:14px"><div class="carte-t"><h3>Versements reçus</h3>' +
@@ -2378,6 +2409,331 @@ function enregistrerDon(){
   toast(no ? "Don enregistré, reçu n° " + no + " créé." : "Don enregistré.");
   aller("dons");
   if(no) voirRecu(no);
+}
+
+/* ======================= SUPPRESSIONS ======================= */
+
+/* Seuls l'administrateur et le directeur suppriment. En production, chaque
+   suppression reste tracée dans le journal avec son auteur. */
+function peutSupprimer(){ return U === "admin" || U === "directeur"; }
+
+function btnSuppr(appel){
+  if(!peutSupprimer()) return "";
+  return '<button class="btn min sup" title="Supprimer" onclick="' + appel + '">✕</button>';
+}
+
+var _aSupprimer = null;
+function demanderSuppression(titre, message, note, action){
+  if(!peutSupprimer()){ toast("Ce profil ne peut pas supprimer."); return; }
+  _aSupprimer = action;
+  ouvrirModale(titre,
+    '<div class="danger"><b>Cette action est définitive.</b><p>' + message + '</p></div>' +
+    (note ? '<div class="apercu" style="margin-top:12px">' + note + '</div>' : ""),
+    '<button class="btn sec" onclick="fermerModale()">Annuler</button>' +
+    '<button class="btn dang" onclick="validerSuppression()">Supprimer</button>');
+}
+function validerSuppression(){
+  var f = _aSupprimer;
+  _aSupprimer = null;
+  fermerModale();
+  if(f) f();
+}
+
+function oter(coll, id){
+  var a = D[coll] || [];
+  for(var i = 0; i < a.length; i++) if(a[i].id === id){ a.splice(i,1); return true; }
+  return false;
+}
+function oterSi(coll, test){
+  var a = D[coll] || [], n = 0;
+  for(var i = a.length - 1; i >= 0; i--) if(test(a[i])){ a.splice(i,1); n++; }
+  return n;
+}
+
+/* --- Élève : les reçus sont des pièces comptables, ils survivent --- */
+function supprimerEleve(id){
+  var el = eleveParId(id);
+  if(!el) return;
+  var nom = el.prenom + " " + el.nom;
+  var nbR = D.recus.filter(function(r){ return r.eleve === id; }).length;
+  var nbM = D.memorisation.filter(function(m){ return m.eleve === id; }).length;
+  var nbI = D.incidents.filter(function(i){ return i.eleve === id; }).length;
+  var det = [];
+  if(nbM) det.push(nbM + " récitation" + (nbM>1?"s":""));
+  if(nbI) det.push(nbI + " signalement" + (nbI>1?"s":""));
+  demanderSuppression("Supprimer " + nom + " ?",
+    "Le dossier de <b>" + e(nom) + "</b> sera retiré" + (det.length ? ", avec " + det.join(" et ") : "") + ".",
+    nbR ? "Ses <b>" + nbR + " reçu" + (nbR>1?"x":"") + "</b> restent dans le journal de caisse : un encaissement ne disparaît pas avec un dossier. Le nom du payeur y est conservé."
+        : "Aucun encaissement n'est rattaché à ce dossier.",
+    function(){
+      D.recus.forEach(function(r){
+        if(r.eleve === id){ r.motif = r.motif + " — " + nom; r.eleve = ""; }
+      });
+      oterSi("memorisation", function(m){ return m.eleve === id; });
+      oterSi("incidents", function(i){ return i.eleve === id; });
+      oter("eleves", id);
+      tracer("Suppression d'un élève", nom);
+      sauver(); toast("Dossier supprimé."); aller(vueActive);
+    });
+}
+
+function supprimerRecu(no){
+  var r = null;
+  for(var i = 0; i < D.recus.length; i++) if(D.recus[i].no === no) r = D.recus[i];
+  if(!r) return;
+  demanderSuppression("Supprimer le reçu n° " + no + " ?",
+    "L'encaissement de <b>" + e(fmG(r.montant)) + "</b> au nom de <b>" + e(r.payeur) + "</b> sera retiré du journal de caisse.",
+    "En comptabilité, un reçu ne se supprime pas : il s'annule par un reçu d'annulation, et le journal garde les deux. Cette suppression directe n'existe que dans la démonstration.",
+    function(){
+      for(var i = 0; i < D.recus.length; i++) if(D.recus[i].no === no){ D.recus.splice(i,1); break; }
+      D.dons.forEach(function(x){ if(x.recu === no) x.recu = ""; });
+      tracer("Suppression d'un reçu", "N° " + no + " — " + fmG(r.montant));
+      sauver(); toast("Reçu supprimé."); aller(vueActive);
+    });
+}
+
+function supprimerDepense(id){
+  var d = parId(D.depenses, id);
+  if(!d) return;
+  demanderSuppression("Supprimer cette dépense ?",
+    "<b>" + e(d.libelle) + "</b> — " + e(fmG(d.montant)) + " du " + dateFr(d.date) + ".",
+    "", function(){
+      oter("depenses", id);
+      tracer("Suppression d'une dépense", d.libelle + " — " + fmG(d.montant));
+      sauver(); toast("Dépense supprimée."); aller(vueActive);
+    });
+}
+
+function supprimerMemo(id){
+  var m = parId(D.memorisation, id);
+  if(!m) return;
+  demanderSuppression("Supprimer cette récitation ?",
+    "<b>" + e(m.sourate) + "</b>, pages " + e(m.pages) + ", pour " + e(nomEleve(m.eleve)) + ".",
+    "", function(){
+      oter("memorisation", id);
+      tracer("Suppression d'une récitation", nomEleve(m.eleve) + " — " + m.sourate);
+      sauver(); toast("Récitation supprimée."); aller(vueActive);
+    });
+}
+
+/* --- Employé : la paie disparaît, la dépense comptable reste --- */
+function supprimerEmploye(id){
+  var p = parId(D.personnel, id);
+  if(!p) return;
+  var nbY = D.paies.filter(function(y){ return y.personnel === id; }).length;
+  var nbA = D.absences.filter(function(a){ return a.personnel === id; }).length;
+  var det = [];
+  if(nbY) det.push(nbY + " ligne" + (nbY>1?"s":"") + " de paie");
+  if(nbA) det.push(nbA + " absence" + (nbA>1?"s":""));
+  demanderSuppression("Supprimer " + p.nom + " ?",
+    "Le dossier de <b>" + e(p.nom) + "</b> sera retiré" + (det.length ? ", avec " + det.join(" et ") : "") + ".",
+    nbY ? "Les <b>" + nbY + " dépense" + (nbY>1?"s":"") + "</b> correspondant à ses salaires restent en comptabilité, avec son nom en libellé."
+        : "Aucun salaire n'a été versé à cet employé.",
+    function(){
+      oterSi("paies", function(y){ return y.personnel === id; });
+      oterSi("absences", function(a){ return a.personnel === id; });
+      oter("personnel", id);
+      tracer("Suppression d'un employé", p.nom);
+      sauver(); toast("Dossier supprimé."); aller(vueActive);
+    });
+}
+
+function supprimerAbsence(id){
+  var a = parId(D.absences, id);
+  if(!a) return;
+  demanderSuppression("Supprimer cette ligne ?",
+    e(a.type) + " du " + dateFr(a.date) + " — " + e(nomPersonnel(a.personnel)) + ".",
+    "", function(){
+      oter("absences", id);
+      tracer("Suppression d'une absence", nomPersonnel(a.personnel) + " — " + a.type);
+      sauver(); toast("Ligne supprimée."); aller(vueActive);
+    });
+}
+
+function supprimerPaie(id){
+  var y = parId(D.paies, id);
+  if(!y) return;
+  demanderSuppression("Supprimer ce versement ?",
+    "Salaire de " + e(moisFr(y.mois)) + " pour <b>" + e(nomPersonnel(y.personnel)) + "</b>, " + e(fmG(y.net)) + ".",
+    "La dépense correspondante reste en comptabilité. Supprimez-la séparément si elle est erronée.",
+    function(){
+      oter("paies", id);
+      tracer("Suppression d'une paie", nomPersonnel(y.personnel) + " — " + moisFr(y.mois));
+      sauver(); toast("Versement supprimé."); aller(vueActive);
+    });
+}
+
+function supprimerChambre(id){
+  var ch = parId(D.chambres, id);
+  if(!ch) return;
+  var occ = ELS().filter(function(x){ return x.chambre === id; });
+  demanderSuppression("Supprimer " + ch.nom + " ?",
+    "<b>" + e(ch.nom) + "</b> (" + e(ch.bloc) + ") sera retirée de l'internat.",
+    occ.length ? "Ses <b>" + occ.length + " pensionnaire" + (occ.length>1?"s":"") + "</b> se retrouveront sans chambre et devront être réaffectés."
+               : "Cette chambre est vide.",
+    function(){
+      D.eleves.forEach(function(x){ if(x.chambre === id) x.chambre = ""; });
+      oter("chambres", id);
+      tracer("Suppression d'une chambre", ch.nom);
+      sauver(); toast("Chambre supprimée."); aller(vueActive);
+    });
+}
+
+function supprimerIncident(id){
+  var i = parId(D.incidents, id);
+  if(!i) return;
+  demanderSuppression("Supprimer ce signalement ?",
+    e(i.type) + " — " + e(nomEleve(i.eleve)) + ", " + dateFr(i.date) + ".",
+    "", function(){
+      oter("incidents", id);
+      tracer("Suppression d'un incident", nomEleve(i.eleve) + " — " + i.type);
+      sauver(); toast("Signalement supprimé."); aller(vueActive);
+    });
+}
+
+function supprimerAppel(id){
+  var a = parId(D.appels, id);
+  if(!a) return;
+  demanderSuppression("Supprimer cet appel ?",
+    "Appel du " + dateFr(a.date) + " — " + a.presents + " présents, " + a.absents + " absents.",
+    "", function(){
+      oter("appels", id);
+      tracer("Suppression d'un appel", dateFr(a.date));
+      sauver(); toast("Appel supprimé."); aller(vueActive);
+    });
+}
+
+function supprimerMenu(id){
+  var m = parId(D.menus, id);
+  if(!m) return;
+  demanderSuppression("Supprimer ce repas ?",
+    "<b>" + e(m.plat) + "</b> — " + e(m.repas) + " du " + dateFr(m.date) + ".",
+    "Le coût par repas et par convive sera recalculé.",
+    function(){
+      oter("menus", id);
+      tracer("Suppression d'un repas", m.plat);
+      sauver(); toast("Repas supprimé."); aller(vueActive);
+    });
+}
+
+/* --- Mouvement : la quantité repart au stock, sinon les comptes mentent --- */
+function supprimerMouvement(id){
+  var v = parId(D.mouvements, id);
+  if(!v) return;
+  var art = parId(D.stock, v.article);
+  var sens = (v.type === "sortie") ? "remise en stock" : "retirée du stock";
+  demanderSuppression("Supprimer ce mouvement ?",
+    (v.type === "sortie" ? "Sortie" : "Entrée") + " de " + v.qte + " " + e(art ? art.unite : "") +
+    " — " + e(nomArticle(v.article)) + ", " + dateFr(v.date) + ".",
+    "La quantité sera <b>" + sens + "</b> pour que l'inventaire reste juste.",
+    function(){
+      if(art) art.qte += (v.type === "sortie" ? v.qte : -v.qte);
+      oter("mouvements", id);
+      tracer("Suppression d'un mouvement", nomArticle(v.article) + " — " + v.qte);
+      sauver(); toast("Mouvement supprimé, stock rétabli."); aller(vueActive);
+    });
+}
+
+function supprimerArticle(id){
+  var a = parId(D.stock, id);
+  if(!a) return;
+  var nb = D.mouvements.filter(function(v){ return v.article === id; }).length;
+  demanderSuppression("Supprimer " + a.article + " ?",
+    "<b>" + e(a.article) + "</b> sera retiré du magasin, avec ses " + a.qte + " " + e(a.unite) + " en stock.",
+    nb ? "Ses <b>" + nb + " mouvement" + (nb>1?"s":"") + "</b> seront également effacés, y compris les sorties vers la cuisine."
+       : "Aucun mouvement n'est enregistré sur cet article.",
+    function(){
+      oterSi("mouvements", function(v){ return v.article === id; });
+      oter("stock", id);
+      tracer("Suppression d'un article", a.article);
+      sauver(); toast("Article supprimé."); aller(vueActive);
+    });
+}
+
+function supprimerDonateur(id){
+  var g = parId(D.donateurs, id);
+  if(!g) return;
+  var nb = D.dons.filter(function(x){ return x.donateur === id; }).length;
+  demanderSuppression("Supprimer " + g.nom + " ?",
+    "La fiche de <b>" + e(g.nom) + "</b> sera retirée" + (nb ? ", avec ses " + nb + " versement" + (nb>1?"s":"") : "") + ".",
+    nb ? "Les reçus déjà émis pour ces dons restent dans le journal de caisse." : "",
+    function(){
+      oterSi("dons", function(x){ return x.donateur === id; });
+      oter("donateurs", id);
+      tracer("Suppression d'un donateur", g.nom);
+      sauver(); toast("Fiche supprimée."); aller(vueActive);
+    });
+}
+
+function supprimerDon(id){
+  var x = parId(D.dons, id);
+  if(!x) return;
+  demanderSuppression("Supprimer ce versement ?",
+    e(fmG(x.montant)) + " de <b>" + e(nomDonateur(x.donateur)) + "</b>, " + dateFr(x.date) + ".",
+    x.recu ? "Le reçu n° " + e(x.recu) + " reste dans le journal de caisse. Supprimez-le séparément si nécessaire." : "",
+    function(){
+      oter("dons", id);
+      tracer("Suppression d'un don", nomDonateur(x.donateur) + " — " + fmG(x.montant));
+      sauver(); toast("Versement supprimé."); aller(vueActive);
+    });
+}
+
+function supprimerCentre(id){
+  if(D.centres.length < 2){ toast("Il doit rester au moins un centre."); return; }
+  if(id === D.centreActif){ toast("Basculez d'abord sur un autre centre."); return; }
+  var ct = centreDe(id);
+  var n = 0;
+  COLLECTIONS.forEach(function(k){
+    n += (D[k] || []).filter(function(x){ return (x.c || "pita") === id; }).length;
+  });
+  demanderSuppression("Supprimer le centre de " + ct.ville + " ?",
+    "Le centre <b>" + e(ct.nom) + "</b> et la totalité de ses données seront effacés.",
+    "Cela représente <b>" + n + " enregistrement" + (n>1?"s":"") + "</b> : élèves, reçus, dépenses, personnel, stock. Aucune autre donnée n'est touchée.",
+    function(){
+      COLLECTIONS.forEach(function(k){
+        oterSi(k, function(x){ return (x.c || "pita") === id; });
+      });
+      for(var i = 0; i < D.centres.length; i++) if(D.centres[i].id === id){ D.centres.splice(i,1); break; }
+      tracer("Suppression d'un centre", ct.nom + " — " + n + " enregistrements");
+      sauver(); majEnteteCentre(); construireMenu(); toast("Centre supprimé."); aller("parametres");
+    });
+}
+
+/* --- Remise à zéro --- */
+function compterCentre(id){
+  var n = 0;
+  COLLECTIONS.forEach(function(k){
+    n += (D[k] || []).filter(function(x){ return (x.c || "pita") === id; }).length;
+  });
+  return n;
+}
+function viderCentre(){
+  var ct = CT(), n = compterCentre(ct.id);
+  demanderSuppression("Vider le centre de " + ct.ville + " ?",
+    "Les <b>" + n + " enregistrement" + (n>1?"s":"") + "</b> du centre de <b>" + e(ct.ville) + "</b> seront effacés : élèves, reçus, dépenses, personnel, stock, tout.",
+    "Le centre lui-même est conservé avec son nom, ses téléphones et son année scolaire. Les autres centres ne sont pas touchés.",
+    function(){
+      COLLECTIONS.forEach(function(k){
+        oterSi(k, function(x){ return (x.c || "pita") === ct.id; });
+      });
+      tracer("Vidage d'un centre", ct.nom + " — " + n + " enregistrements");
+      sauver(); toast("Centre vidé."); aller("parametres");
+    });
+}
+function toutAZero(){
+  var n = 0;
+  COLLECTIONS.forEach(function(k){ n += (D[k] || []).length; });
+  demanderSuppression("Tout remettre à zéro ?",
+    "La totalité des données sera effacée : <b>" + n + " enregistrement" + (n>1?"s":"") + "</b> sur l'ensemble des centres, plus le journal des opérations.",
+    "Les centres sont conservés avec leur identité, pour que vous puissiez saisir vos données réelles sur une base vierge. Pour retrouver le jeu de démonstration, utilisez « Réinitialiser la démonstration ».",
+    function(){
+      COLLECTIONS.forEach(function(k){ D[k] = []; });
+      D.journal = [];
+      D.sequence = 0;
+      D.seqEleve = 0;
+      tracer("Remise à zéro complète", n + " enregistrements effacés");
+      sauver(); toast("Toutes les données ont été effacées."); aller("parametres");
+    });
 }
 
 /* ======================= EXPORTS ======================= */
@@ -2757,8 +3113,22 @@ function vueParametres(){
       kpi("Reçus", RECS().length, "émis", false, "vert", "₵") +
     '</div>' +
     '<button class="btn sec" onclick="exporterJson()">Exporter les données (JSON)</button> ' +
-    '<button class="btn sec" style="color:var(--rouge);border-color:#E9C9C6" onclick="reinitialiser()">Réinitialiser la démonstration</button>' +
+    '<button class="btn sec" onclick="reinitialiser()">Réinitialiser la démonstration</button>' +
     '</div></div>';
+
+  h += '<div class="carte h-or" style="margin-top:14px"><div class="carte-t"><h3>Partir sur une base vierge</h3></div>' +
+    '<div class="carte-c"><p style="font-size:13.5px;color:var(--gris);margin-bottom:14px">' +
+    'Pour saisir les données réelles du centre, effacez d\'abord les données fictives. ' +
+    'Pensez à exporter une sauvegarde avant : l\'effacement ne se rattrape pas.</p>' +
+    '<table style="margin-bottom:14px"><tbody>' +
+    '<tr><td><b>Vider ce centre</b><br><small style="color:var(--gris)">Efface les ' + compterCentre(D.centreActif) +
+      ' enregistrements de ' + e(CT().ville) + ', garde les autres centres</small></td>' +
+      '<td class="num"><button class="btn sup" onclick="viderCentre()">Vider ' + e(CT().ville) + '</button></td></tr>' +
+    '<tr><td><b>Tout remettre à zéro</b><br><small style="color:var(--gris)">Efface les données de tous les centres et le journal</small></td>' +
+      '<td class="num"><button class="btn dang" onclick="toutAZero()">Tout effacer</button></td></tr>' +
+    '<tr><td><b>Réinitialiser la démonstration</b><br><small style="color:var(--gris)">Remet le jeu de données fictif d\'origine</small></td>' +
+      '<td class="num"><button class="btn sec" onclick="reinitialiser()">Réinitialiser</button></td></tr>' +
+    '</tbody></table></div></div>';
   h += '</div>';
 
   h += '<div class="carte" style="margin-top:14px"><div class="carte-t"><h3>Écart avec la version complète</h3></div><div class="carte-c">' +
@@ -2783,8 +3153,9 @@ function vueParametres(){
       return '<tr><td><b>' + e(ct.nom) + '</b></td><td>' + e(ct.ville) + '</td>' +
         '<td class="num">' + ne + '</td><td class="num">' + np + '</td>' +
         '<td>' + (ct.id === D.centreActif ? '<span class="et v">Centre actif</span>' : '<span class="et g">Inactif</span>') + '</td>' +
-        '<td class="num">' + (ct.id === D.centreActif ? "" :
-          '<button class="btn min sec" onclick="changerCentre(\'' + ct.id + '\')">Basculer</button>') + '</td></tr>';
+        '<td><div class="actions">' + (ct.id === D.centreActif ? "" :
+          '<button class="btn min sec" onclick="changerCentre(\'' + ct.id + '\')">Basculer</button>' +
+          (D.centres.length > 1 ? btnSuppr('supprimerCentre(\'' + ct.id + '\')') : "")) + '</div></td></tr>';
     }).join("") + '</tbody></table>' +
     '<div class="apercu" style="margin:12px 10px 2px">Chaque enregistrement — élève, reçu, dépense, article — porte l\'identifiant de son centre. Basculez d\'un centre à l\'autre pour vérifier qu\'aucune donnée ne traverse.</div>' +
     '</div></div>';
@@ -2838,8 +3209,13 @@ function enregistrerCentre(){
   sauver(); fermerModale(); toast("Centre créé."); majEnteteCentre(); aller("parametres");
 }
 function reinitialiser(){
-  if(!confirm("Remettre la démonstration dans son état initial ? Toutes vos saisies seront effacées.")) return;
-  D = neuf(); normaliser(); sauver(); majEnteteCentre(); construireMenu(); toast("Démonstration réinitialisée."); aller("tableau");
+  demanderSuppression("Réinitialiser la démonstration ?",
+    "Toutes vos saisies seront remplacées par le jeu de données fictif d'origine.",
+    "Les centres que vous avez créés et les modifications d'identité seront également perdus.",
+    function(){
+      D = neuf(); normaliser(); sauver(); majEnteteCentre(); construireMenu();
+      toast("Démonstration réinitialisée."); aller("tableau");
+    });
 }
 
 /* ======================= INSTALLATION SUR TÉLÉPHONE ======================= */
