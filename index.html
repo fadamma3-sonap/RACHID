@@ -138,24 +138,44 @@ main{min-width:0;padding:22px 26px 56px}
 .g2{grid-template-columns:repeat(2,1fr)}
 .g21{grid-template-columns:1.6fr 1fr}
 
-.kpi{position:relative;background:var(--blanc);border:1px solid var(--bord);border-radius:var(--r);
-  padding:14px 15px 14px 18px;box-shadow:var(--ombre);overflow:hidden}
-.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--kc,var(--or))}
-.kpi .lab{font-size:11.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px}
-.kpi .val{font-family:var(--serif);font-size:25px;color:var(--kc,var(--vert));margin-top:5px;line-height:1.15}
-.kpi .sub{font-size:12px;color:var(--gris-clair);margin-top:3px}
-.kpi.alerte{--kc:var(--rouge);background:linear-gradient(180deg,var(--rouge-fond) 0%,#fff 58%)}
-.kpi.k-or   {--kc:var(--f-or);   background:linear-gradient(180deg,var(--f-or-bg) 0%,#fff 58%)}
-.kpi.k-vert {--kc:var(--f-vert); background:linear-gradient(180deg,var(--f-vert-bg) 0%,#fff 58%)}
-.kpi.k-bleu {--kc:var(--f-bleu); background:linear-gradient(180deg,var(--f-bleu-bg) 0%,#fff 58%)}
-.kpi.k-terre{--kc:var(--f-terre);background:linear-gradient(180deg,var(--f-terre-bg) 0%,#fff 58%)}
-.kpi.k-gris {--kc:var(--f-gris); background:linear-gradient(180deg,var(--f-gris-bg) 0%,#fff 58%)}
+/* Indicateurs : fond franchement teinté, pastille d'icône pleine et chiffre
+   dans la couleur de la famille — lisible même sur un écran délavé. */
+.kpi{position:relative;display:flex;align-items:flex-start;gap:12px;
+  background:var(--kbg2,var(--or-fond));border:1px solid var(--kbd2,var(--or-pale));
+  border-left:5px solid var(--kc,var(--or));border-radius:var(--r);
+  padding:14px 15px;box-shadow:var(--ombre)}
+.kpi .pic{width:38px;height:38px;flex:0 0 auto;border-radius:10px;display:grid;place-items:center;
+  background:var(--kc,var(--or));color:#fff;font-size:17px;line-height:1;
+  box-shadow:0 2px 6px rgba(16,24,20,.18)}
+.kpi .txt{min-width:0}
+.kpi .lab{font-size:11px;color:var(--kc,var(--gris));text-transform:uppercase;letter-spacing:.7px;font-weight:700;opacity:.85}
+.kpi .val{font-family:var(--serif);font-size:22px;color:var(--kc,var(--vert));margin-top:3px;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(min-width:1500px){.kpi .val{font-size:25px}}
+.kpi .sub{font-size:12px;color:var(--gris);margin-top:3px}
+.kpi.alerte{--kc:var(--rouge); --kbg2:var(--rouge-fond); --kbd2:#F2CFCB}
+.kpi.k-or   {--kc:var(--f-or);   --kbg2:var(--f-or-bg);   --kbd2:#EBDCB6}
+.kpi.k-vert {--kc:var(--f-vert); --kbg2:var(--f-vert-bg); --kbd2:#C4E2D1}
+.kpi.k-bleu {--kc:var(--f-bleu); --kbg2:var(--f-bleu-bg); --kbd2:#BDDDE3}
+.kpi.k-terre{--kc:var(--f-terre);--kbg2:var(--f-terre-bg);--kbd2:#F1D2C2}
+.kpi.k-gris {--kc:var(--f-gris); --kbg2:var(--f-gris-bg); --kbd2:#CFD9E0}
 
-/* en-tête de carte : filet coloré discret devant le titre */
-.carte-t h3::before{content:"";display:inline-block;width:3px;height:13px;border-radius:2px;
+/* en-tête de carte : bandeau teinté à la couleur de la famille */
+.carte-t{background:var(--hbg,transparent);border-radius:var(--r) var(--r) 0 0}
+.carte-t h3{color:var(--hc,var(--vert))}
+.carte-t h3::before{content:"";display:inline-block;width:4px;height:14px;border-radius:2px;
   background:var(--hc,var(--or));margin-right:8px;vertical-align:-2px}
-.carte.h-vert{--hc:var(--f-vert)} .carte.h-bleu{--hc:var(--f-bleu)}
-.carte.h-terre{--hc:var(--f-terre)} .carte.h-gris{--hc:var(--f-gris)}
+.carte.h-or   {--hc:var(--f-or);   --hbg:var(--f-or-bg)}
+.carte.h-vert {--hc:var(--f-vert); --hbg:var(--f-vert-bg)}
+.carte.h-bleu {--hc:var(--f-bleu); --hbg:var(--f-bleu-bg)}
+.carte.h-terre{--hc:var(--f-terre);--hbg:var(--f-terre-bg)}
+.carte.h-gris {--hc:var(--f-gris); --hbg:var(--f-gris-bg)}
+
+/* lignes d'alerte : fond teinté selon la gravité */
+.alerte-l{border-radius:8px;padding:9px 11px;margin-bottom:6px;border-bottom:0}
+.alerte-l.a-r{background:var(--rouge-fond)}
+.alerte-l.a-a{background:var(--ambre-fond)}
+.alerte-l.a-v{background:var(--ok-fond)}
 
 /* comparaison recettes / dépenses du tableau de bord */
 .barres{display:flex;flex-direction:column;gap:14px}
@@ -1001,10 +1021,10 @@ function vueTableau(){
   h += '<div class="bandeau"><b>Démonstration.</b> Les chiffres ci-dessous proviennent d\'un jeu de données fictif enregistré dans ce navigateur. Le bouton « Réinitialiser » dans Paramètres remet tout à zéro.</div>';
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
-    kpi("Élèves inscrits", eleves.length, internes + " internes · " + (eleves.length - internes) + " semi-internes", false, "bleu") +
-    kpi("Recettes du mois", fmG(t.recettesMois), RECS().filter(function(r){return moisCourant(r.date);}).length + " reçus émis", false, "vert") +
-    kpi("Dépenses du mois", fmG(t.depensesMois), DEPS().filter(function(d){return moisCourant(d.date);}).length + " opérations", false, "terre") +
-    kpi("Solde général", fmG(t.solde), "recettes moins dépenses", t.solde < 0, "or") +
+    kpi("Élèves inscrits", eleves.length, internes + " internes · " + (eleves.length - internes) + " semi-internes", false, "bleu", "☗") +
+    kpi("Recettes du mois", fmG(t.recettesMois), RECS().filter(function(r){return moisCourant(r.date);}).length + " reçus émis", false, "vert", "₵") +
+    kpi("Dépenses du mois", fmG(t.depensesMois), DEPS().filter(function(d){return moisCourant(d.date);}).length + " opérations", false, "terre", "▤") +
+    kpi("Solde général", fmG(t.solde), "recettes moins dépenses", t.solde < 0, "or", "◆") +
     '</div>';
 
   h += '<div class="grille g21">';
@@ -1032,12 +1052,12 @@ function vueTableau(){
   /* alertes */
   var al = "";
   bas.forEach(function(s){
-    al += '<div class="alerte-l"><span class="puce r"></span><div><b>' + e(s.article) + '</b>' +
+    al += '<div class="alerte-l a-r"><span class="puce r"></span><div><b>' + e(s.article) + '</b>' +
           '<small>Stock minimum atteint — ' + s.qte + ' ' + e(s.unite) + ' en magasin, seuil ' + s.min + '</small></div></div>';
   });
   if(imp.length){
     var du = imp.reduce(function(a,x){ return a + (x.frais - paye(x.id)); }, 0);
-    al += '<div class="alerte-l"><span class="puce a"></span><div><b>' + imp.length + ' élève' + (imp.length>1?"s":"") + ' en situation d\'impayé</b>' +
+    al += '<div class="alerte-l a-a"><span class="puce a"></span><div><b>' + imp.length + ' élève' + (imp.length>1?"s":"") + ' en situation d\'impayé</b>' +
           '<small>' + e(fmG(du)) + ' restent à recouvrer sur l\'année en cours</small></div></div>';
   }
   var moisEnCours = new Date().toISOString().slice(0,7);
@@ -1048,27 +1068,27 @@ function vueTableau(){
     return true;
   });
   if(nonPayes.length){
-    al += '<div class="alerte-l"><span class="puce a"></span><div><b>' + nonPayes.length + ' salaire' + (nonPayes.length>1?"s":"") + ' non versé' + (nonPayes.length>1?"s":"") + '</b>' +
+    al += '<div class="alerte-l a-a"><span class="puce a"></span><div><b>' + nonPayes.length + ' salaire' + (nonPayes.length>1?"s":"") + ' non versé' + (nonPayes.length>1?"s":"") + '</b>' +
           '<small>Pour le mois de ' + e(moisFr(moisEnCours)) + '</small></div></div>';
   }
   var sansChambre = ELS().filter(function(x){ return x.statut === "interne" && !x.chambre; });
   if(sansChambre.length){
-    al += '<div class="alerte-l"><span class="puce a"></span><div><b>' + sansChambre.length + ' pensionnaire' + (sansChambre.length>1?"s":"") + ' sans chambre</b>' +
+    al += '<div class="alerte-l a-a"><span class="puce a"></span><div><b>' + sansChambre.length + ' pensionnaire' + (sansChambre.length>1?"s":"") + ' sans chambre</b>' +
           '<small>À affecter depuis le module Internat</small></div></div>';
   }
   var incRecents = INC().filter(function(i){
     return (Date.now() - Date.parse(i.date)) < 7 * 86400000;
   });
   if(incRecents.length){
-    al += '<div class="alerte-l"><span class="puce r"></span><div><b>' + incRecents.length + ' incident' + (incRecents.length>1?"s":"") + ' à l\'internat cette semaine</b>' +
+    al += '<div class="alerte-l a-r"><span class="puce r"></span><div><b>' + incRecents.length + ' incident' + (incRecents.length>1?"s":"") + ' à l\'internat cette semaine</b>' +
           '<small>' + e(incRecents.map(function(i){ return i.type; }).join(", ")) + '</small></div></div>';
   }
   var mem = MEMS();
   var moy = mem.reduce(function(a,m){ return a + m.note; }, 0) / (mem.length || 1);
-  al += '<div class="alerte-l"><span class="puce v"></span><div><b>Suivi coranique à jour</b>' +
+  al += '<div class="alerte-l a-v"><span class="puce v"></span><div><b>Suivi coranique à jour</b>' +
         '<small>' + mem.length + ' récitations enregistrées — moyenne ' + moy.toFixed(1) + '/20</small></div></div>';
 
-  h += '<div class="carte h-terre"><div class="carte-t"><h3>Alertes</h3></div><div class="carte-c" style="padding:6px 16px">' + al + '</div></div>';
+  h += '<div class="carte h-or"><div class="carte-t"><h3>Alertes</h3></div><div class="carte-c" style="padding:6px 16px">' + al + '</div></div>';
   h += '</div>';
 
   /* équilibre du mois + répartition des dépenses, lisibles d'un coup d'œil */
@@ -1115,11 +1135,15 @@ function vueTableau(){
   h += '</div>';
   return h;
 }
-/* couleur : "or" | "vert" | "bleu" | "terre" | "gris" — l'alerte l'emporte */
-function kpi(lab, val, sub, alerte, couleur){
+/* couleur : "or" | "vert" | "bleu" | "terre" | "gris" — l'alerte l'emporte.
+   icone : un caractère affiché dans la pastille, facultatif. */
+function kpi(lab, val, sub, alerte, couleur, icone){
   var cl = alerte ? " alerte" : (couleur ? " k-" + couleur : "");
-  return '<div class="kpi' + cl + '"><div class="lab">' + e(lab) + '</div>' +
-         '<div class="val">' + e(val) + '</div><div class="sub">' + e(sub) + '</div></div>';
+  var pic = (alerte && !icone) ? "!" : icone;
+  return '<div class="kpi' + cl + '">' +
+         (pic ? '<span class="pic">' + e(pic) + '</span>' : "") +
+         '<span class="txt"><span class="lab">' + e(lab) + '</span>' +
+         '<div class="val">' + e(val) + '</div><div class="sub">' + e(sub) + '</div></span></div>';
 }
 
 /* ======================= CAISSE ======================= */
@@ -1130,9 +1154,9 @@ function vueCaisse(){
     '<button class="btn" onclick="formRecu()">+ Nouveau reçu</button>');
 
   h += '<div class="grille g3" style="margin-bottom:14px">' +
-    kpi("Total encaissé", fmG(t.recettes), recus.length + " reçus émis", false, "vert") +
-    kpi("Encaissé ce mois", fmG(t.recettesMois), "mois en cours", false, "vert") +
-    kpi("Impayés", impayes().length + " élèves", "frais non soldés", impayes().length > 0, "or") +
+    kpi("Total encaissé", fmG(t.recettes), recus.length + " reçus émis", false, "vert", "₵") +
+    kpi("Encaissé ce mois", fmG(t.recettesMois), "mois en cours", false, "vert", "◷") +
+    kpi("Impayés", impayes().length + " élèves", "frais non soldés", impayes().length > 0, "or", "!") +
     '</div>';
 
   var lignes = recus.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; }).map(function(r){
@@ -1144,7 +1168,7 @@ function vueCaisse(){
       '<td class="num"><button class="btn min sec" onclick="voirRecu(\'' + e(r.no) + '\')">Reçu</button></td></tr>';
   }).join("");
 
-  h += '<div class="carte"><div class="carte-t"><h3>Journal des reçus</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
+  h += '<div class="carte h-vert"><div class="carte-t"><h3>Journal des reçus</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
     (lignes ? '<table><thead><tr><th>N°</th><th>Date</th><th>Payeur</th><th>Motif</th><th>Mode</th><th class="num">Montant</th><th></th></tr></thead><tbody>' + lignes + '</tbody></table>'
             : '<div class="vide">Aucun reçu enregistré.</div>') + '</div></div>';
   return h;
@@ -1316,9 +1340,9 @@ function vueDepenses(){
   var cats = Object.keys(parCat).sort(function(a,b){ return parCat[b] - parCat[a]; });
 
   h += '<div class="grille g3" style="margin-bottom:14px">' +
-    kpi("Total des dépenses", fmG(t.depenses), deps.length + " opérations", false, "terre") +
-    kpi("Dépenses du mois", fmG(t.depensesMois), "mois en cours", false, "terre") +
-    kpi("Premier poste", cats[0] || "—", cats[0] ? fmG(parCat[cats[0]]) : "—", false, "terre") +
+    kpi("Total des dépenses", fmG(t.depenses), deps.length + " opérations", false, "terre", "▤") +
+    kpi("Dépenses du mois", fmG(t.depensesMois), "mois en cours", false, "terre", "◷") +
+    kpi("Premier poste", cats[0] || "—", cats[0] ? fmG(parCat[cats[0]]) : "—", false, "terre", "★") +
     '</div>';
 
   var lignes = deps.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; }).map(function(d){
@@ -1328,7 +1352,7 @@ function vueDepenses(){
       '<td class="num"><b>' + fm(d.montant) + '</b></td></tr>';
   }).join("");
 
-  h += '<div class="carte"><div class="carte-t"><h3>Journal des dépenses</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
+  h += '<div class="carte h-terre"><div class="carte-t"><h3>Journal des dépenses</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
     (lignes ? '<table><thead><tr><th>Date</th><th>Catégorie</th><th>Libellé</th><th>Fournisseur</th><th>Mode</th><th class="num">Montant</th></tr></thead><tbody>' + lignes + '</tbody></table>'
             : '<div class="vide">Aucune dépense enregistrée.</div>') + '</div></div>';
   return h;
@@ -1514,9 +1538,9 @@ function vueCoran(){
   var mem = MEMS();
   var moy = mem.reduce(function(a,m){ return a + m.note; }, 0) / (mem.length || 1);
   h += '<div class="grille g3" style="margin-bottom:14px">' +
-    kpi("Récitations", mem.length, "enregistrées au total", false, "bleu") +
-    kpi("Moyenne générale", moy.toFixed(1) + " / 20", "toutes classes confondues", false, "bleu") +
-    kpi("Élèves suivis", uniq(mem.map(function(m){ return m.eleve; })).length, "sur " + ELS().length + " inscrits", false, "bleu") +
+    kpi("Récitations", mem.length, "enregistrées au total", false, "bleu", "❖") +
+    kpi("Moyenne générale", moy.toFixed(1) + " / 20", "toutes classes confondues", false, "bleu", "★") +
+    kpi("Élèves suivis", uniq(mem.map(function(m){ return m.eleve; })).length, "sur " + ELS().length + " inscrits", false, "bleu", "☗") +
     '</div>';
 
   var lignes = mem.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; }).map(function(m){
@@ -1527,7 +1551,7 @@ function vueCoran(){
       '<td class="num"><span class="et ' + cl + '">' + m.note + '/20</span></td></tr>';
   }).join("");
 
-  h += '<div class="carte"><div class="carte-t"><h3>Dernières récitations</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
+  h += '<div class="carte h-bleu"><div class="carte-t"><h3>Dernières récitations</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
     (lignes ? '<table><thead><tr><th>Date</th><th>Élève</th><th>Sourate</th><th>Pages</th><th>Tajwid</th><th>Enseignant</th><th class="num">Note</th></tr></thead><tbody>' + lignes + '</tbody></table>'
             : '<div class="vide">Aucune récitation enregistrée.</div>') + '</div></div>';
   return h;
@@ -1580,9 +1604,9 @@ function vueStock(){
     '<button class="btn" onclick="formMouvement()">+ Mouvement de stock</button>');
 
   h += '<div class="grille g3" style="margin-bottom:14px">' +
-    kpi("Articles suivis", stk.length, uniq(stk.map(function(s){ return s.categorie; })).length + " catégories", false, "terre") +
-    kpi("Valeur du stock", fmG(valeur), "au prix d'achat", false, "terre") +
-    kpi("Alertes", bas.length + " article" + (bas.length>1?"s":""), "sous le seuil minimum", bas.length > 0) +
+    kpi("Articles suivis", stk.length, uniq(stk.map(function(s){ return s.categorie; })).length + " catégories", false, "terre", "▥") +
+    kpi("Valeur du stock", fmG(valeur), "au prix d'achat", false, "terre", "₵") +
+    kpi("Alertes", bas.length + " article" + (bas.length>1?"s":""), "sous le seuil minimum", bas.length > 0, "vert", bas.length ? "!" : "✓") +
     '</div>';
 
   var lignes = stk.map(function(s){
@@ -1593,7 +1617,7 @@ function vueStock(){
       '<td>' + (sous ? '<span class="et r">À réapprovisionner</span>' : '<span class="et v">Suffisant</span>') + '</td></tr>';
   }).join("");
 
-  h += '<div class="carte"><div class="carte-t"><h3>État du magasin</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
+  h += '<div class="carte h-terre"><div class="carte-t"><h3>État du magasin</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
     '<table><thead><tr><th>Article</th><th>Catégorie</th><th class="num">En stock</th><th class="num">Seuil</th><th class="num">Prix unitaire</th><th>État</th></tr></thead><tbody>' +
     lignes + '</tbody></table></div></div>';
   return h;
@@ -1654,10 +1678,10 @@ function vuePersonnel(){
     '<button class="btn" onclick="formEmploye()">+ Nouvel employé</button>');
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
-    kpi("Effectif actif", pers.filter(function(p){ return p.statut === "actif"; }).length, uniq(pers.map(function(p){ return p.type; })).length + " catégories", false, "bleu") +
-    kpi("Masse salariale", fmG(masse), "par mois, postes actifs", false, "bleu") +
-    kpi("Payés ce mois", payesCeMois.length + " / " + pers.filter(function(p){ return p.statut === "actif"; }).length, fmG(payesCeMois.reduce(function(a,y){ return a + y.net; }, 0)) + " versés", false, "vert") +
-    kpi("Restent à payer", reste.length, reste.length ? "salaires du mois en cours" : "tout le monde est payé", reste.length > 0) +
+    kpi("Effectif actif", pers.filter(function(p){ return p.statut === "actif"; }).length, uniq(pers.map(function(p){ return p.type; })).length + " catégories", false, "bleu", "⚑") +
+    kpi("Masse salariale", fmG(masse), "par mois, postes actifs", false, "bleu", "₵") +
+    kpi("Payés ce mois", payesCeMois.length + " / " + pers.filter(function(p){ return p.statut === "actif"; }).length, fmG(payesCeMois.reduce(function(a,y){ return a + y.net; }, 0)) + " versés", false, "vert", "✓") +
+    kpi("Restent à payer", reste.length, reste.length ? "salaires du mois en cours" : "tout le monde est payé", reste.length > 0, "vert", reste.length ? "!" : "✓") +
     '</div>';
 
   var lignes = pers.map(function(p){
@@ -1673,7 +1697,7 @@ function vuePersonnel(){
       '<td class="num"><button class="btn min sec" onclick="fichePersonnel(\'' + p.id + '\')">Fiche</button></td></tr>';
   }).join("");
 
-  h += '<div class="carte"><div class="carte-t"><h3>Dossiers du personnel</h3></div>' +
+  h += '<div class="carte h-bleu"><div class="carte-t"><h3>Dossiers du personnel</h3></div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
     (lignes ? '<table><thead><tr><th>Employé</th><th>Poste</th><th>Catégorie</th><th class="num">Salaire</th>' +
       '<th class="num">Absences</th><th>Salaire du mois</th><th></th></tr></thead><tbody>' + lignes + '</tbody></table>'
@@ -1686,7 +1710,7 @@ function vuePersonnel(){
       '<td>' + (a.justifiee ? "Justifiée" : "Non justifiée") + '</td></tr>';
   }).join("");
 
-  h += '<div class="carte" style="margin-top:14px"><div class="carte-t"><h3>Absences, retards et congés</h3></div>' +
+  h += '<div class="carte h-or" style="margin-top:14px"><div class="carte-t"><h3>Absences, retards et congés</h3></div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
     (la ? '<table><thead><tr><th>Date</th><th>Employé</th><th>Type</th><th>Motif</th><th>Statut</th></tr></thead><tbody>' + la + '</tbody></table>'
         : '<div class="vide">Aucune absence enregistrée.</div>') + '</div></div>';
@@ -1877,10 +1901,10 @@ function vueInternat(){
     '<button class="btn" onclick="formIncident()">+ Signaler un incident</button>');
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
-    kpi("Pensionnaires", internes.length, "élèves internes", false, "terre") +
-    kpi("Capacité", capacite + " lits", chambres.length + " chambres", false, "terre") +
-    kpi("Taux d'occupation", capacite ? Math.round(internes.length / capacite * 100) + " %" : "—", capacite - internes.length + " places libres", false, "terre") +
-    kpi("Dernier appel", dernier ? dateFr(dernier.date) : "—", dernier ? dernier.presents + " présents · " + dernier.absents + " absents" : "aucun appel", dernier && dernier.absents > 0) +
+    kpi("Pensionnaires", internes.length, "élèves internes", false, "terre", "⌂") +
+    kpi("Capacité", capacite + " lits", chambres.length + " chambres", false, "terre", "▥") +
+    kpi("Taux d'occupation", capacite ? Math.round(internes.length / capacite * 100) + " %" : "—", capacite - internes.length + " places libres", false, "terre", "◑") +
+    kpi("Dernier appel", dernier ? dateFr(dernier.date) : "—", dernier ? dernier.presents + " présents · " + dernier.absents + " absents" : "aucun appel", dernier && dernier.absents > 0, "or", "☰") +
     '</div>';
 
   h += '<div class="grille g21">';
@@ -1895,7 +1919,7 @@ function vueInternat(){
       '<td>' + (libres > 0 ? '<span class="et v">' + libres + ' place' + (libres>1?"s":"") + '</span>' : '<span class="et a">complète</span>') + '</td></tr>';
   }).join("");
 
-  h += '<div class="carte"><div class="carte-t"><h3>Chambres et affectations</h3>' +
+  h += '<div class="carte h-terre"><div class="carte-t"><h3>Chambres et affectations</h3>' +
     '<button class="btn min sec" onclick="formAffectation()">Affecter un élève</button></div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
     (lignes ? '<table><thead><tr><th>Chambre</th><th class="num">Occupation</th><th>Pensionnaires</th><th>État</th></tr></thead><tbody>' + lignes + '</tbody></table>'
@@ -1904,18 +1928,18 @@ function vueInternat(){
   var nonAffectes = internes.filter(function(x){ return !x.chambre; });
   var ai = "";
   if(nonAffectes.length){
-    ai += '<div class="alerte-l"><span class="puce a"></span><div><b>' + nonAffectes.length + ' pensionnaire' + (nonAffectes.length>1?"s":"") + ' sans chambre</b>' +
+    ai += '<div class="alerte-l a-a"><span class="puce a"></span><div><b>' + nonAffectes.length + ' pensionnaire' + (nonAffectes.length>1?"s":"") + ' sans chambre</b>' +
       '<small>' + e(nonAffectes.map(function(x){ return x.prenom + " " + x.nom; }).join(", ")) + '</small></div></div>';
   }
   incidents.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; }).slice(0,5).forEach(function(i){
     var p = i.type === "Santé" ? "r" : (i.type === "Discipline" ? "a" : "v");
-    ai += '<div class="alerte-l"><span class="puce ' + p + '"></span><div><b>' + e(i.type) + ' — ' + e(nomEleve(i.eleve)) + '</b>' +
+    ai += '<div class="alerte-l a-' + p + '"><span class="puce ' + p + '"></span><div><b>' + e(i.type) + ' — ' + e(nomEleve(i.eleve)) + '</b>' +
       '<small>' + dateFr(i.date) + " · " + e(i.description) + '</small>' +
       '<small style="color:var(--vert-clair)">Suite : ' + e(i.suite) + '</small></div></div>';
   });
   if(!ai) ai = '<div class="vide">Aucun incident signalé.</div>';
 
-  h += '<div class="carte"><div class="carte-t"><h3>Incidents et signalements</h3></div>' +
+  h += '<div class="carte h-or"><div class="carte-t"><h3>Incidents et signalements</h3></div>' +
        '<div class="carte-c" style="padding:6px 16px">' + ai + '</div></div>';
   h += '</div>';
 
@@ -2070,10 +2094,10 @@ function vueCuisine(){
   h += '<div class="bandeau"><b>Lecture du coût.</b> Les montants ci-dessous ne sont pas saisis : ils sont calculés à partir des denrées réellement sorties du magasin vers la cuisine, valorisées au prix d\'achat. Si les sorties ne sont pas saisies chaque jour, ces chiffres perdent leur sens.</div>';
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
-    kpi("Repas servis", repasServis, jours.length + " jour" + (jours.length>1?"s":"") + " de service", false, "terre") +
-    kpi("Denrées consommées", fmG(cout), "sorties valorisées au prix d'achat", false, "terre") +
-    kpi("Coût moyen par repas", fmG(Math.round(coutRepas)), "toutes catégories confondues", false, "or") +
-    kpi("Coût par convive", fmG(Math.round(coutConvive)), convives + " couverts servis", false, "or") +
+    kpi("Repas servis", repasServis, jours.length + " jour" + (jours.length>1?"s":"") + " de service", false, "terre", "◍") +
+    kpi("Denrées consommées", fmG(cout), "sorties valorisées au prix d'achat", false, "terre", "▥") +
+    kpi("Coût moyen par repas", fmG(Math.round(coutRepas)), "toutes catégories confondues", false, "or", "₵") +
+    kpi("Coût par convive", fmG(Math.round(coutConvive)), convives + " couverts servis", false, "or", "◆") +
     '</div>';
 
   h += '<div class="grille g21">';
@@ -2083,7 +2107,7 @@ function vueCuisine(){
       '<td><b>' + e(m.plat) + '</b></td><td class="num">' + m.convives + '</td></tr>';
   }).join("");
 
-  h += '<div class="carte"><div class="carte-t"><h3>Menus planifiés et servis</h3>' +
+  h += '<div class="carte h-terre"><div class="carte-t"><h3>Menus planifiés et servis</h3>' +
     '<span style="font-size:12px;color:var(--gris)">coût journalier moyen ' + e(fmG(Math.round(coutJour))) + '</span></div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
     (lm ? '<table><thead><tr><th>Date</th><th>Repas</th><th>Plat</th><th class="num">Convives</th></tr></thead><tbody>' + lm + '</tbody></table>'
@@ -2098,7 +2122,7 @@ function vueCuisine(){
       '<td class="num">' + fm(a ? v.qte * a.prix : 0) + '</td></tr>';
   }).join("");
 
-  h += '<div class="carte"><div class="carte-t"><h3>Denrées sorties vers la cuisine</h3></div>' +
+  h += '<div class="carte h-or"><div class="carte-t"><h3>Denrées sorties vers la cuisine</h3></div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
     (ls ? '<table><thead><tr><th>Date</th><th>Article</th><th class="num">Quantité</th><th class="num">Valeur</th></tr></thead><tbody>' + ls + '</tbody></table>'
         : '<div class="vide">Aucune sortie enregistrée.</div>') + '</div></div>';
@@ -2198,10 +2222,10 @@ function vueDons(){
     '<button class="btn" onclick="formDon()">+ Enregistrer un don</button>');
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
-    kpi("Total reçu", fmG(recu), xs.length + " versements", false, "vert") +
-    kpi("Engagements mensuels", fmG(engage), gs.filter(function(g){ return g.engagement > 0; }).length + " parrains réguliers", false, "vert") +
-    kpi("Reçu ce mois", fmG(recuCeMois), moisFr(moisEnCours), false, "vert") +
-    kpi("Reste à percevoir", fmG(attendu), attendu ? "sur les engagements du mois" : "engagements honorés", attendu > 0) +
+    kpi("Total reçu", fmG(recu), xs.length + " versements", false, "vert", "♥") +
+    kpi("Engagements mensuels", fmG(engage), gs.filter(function(g){ return g.engagement > 0; }).length + " parrains réguliers", false, "vert", "◷") +
+    kpi("Reçu ce mois", fmG(recuCeMois), moisFr(moisEnCours), false, "vert", "₵") +
+    kpi("Reste à percevoir", fmG(attendu), attendu ? "sur les engagements du mois" : "engagements honorés", attendu > 0, "vert", attendu ? "!" : "✓") +
     '</div>';
 
   var lg = gs.map(function(g){
@@ -2218,7 +2242,7 @@ function vueDons(){
       '<td class="num"><button class="btn min sec" onclick="ficheDonateur(\'' + g.id + '\')">Fiche</button></td></tr>';
   }).join("");
 
-  h += '<div class="carte"><div class="carte-t"><h3>Donateurs et parrains</h3></div>' +
+  h += '<div class="carte h-vert"><div class="carte-t"><h3>Donateurs et parrains</h3></div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
     (lg ? '<table><thead><tr><th>Donateur</th><th>Type</th><th class="num">Engagement</th><th class="num">Total versé</th>' +
       '<th>Dernier don</th><th>Situation</th><th></th></tr></thead><tbody>' + lg + '</tbody></table>'
@@ -2473,10 +2497,10 @@ function vueRapports(){
     '</div>';
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
-    kpi("Recettes", fmG(R.totalRec), R.rec.length + " encaissements", false, "vert") +
-    kpi("Dépenses", fmG(R.totalDep), R.dep.length + " opérations", false, "terre") +
-    kpi("Résultat", fmG(R.solde), R.solde >= 0 ? "excédent sur la période" : "déficit sur la période", R.solde < 0, "or") +
-    kpi("Élèves inscrits", ELS().length, impayes().length + " en impayé", false, "bleu") +
+    kpi("Recettes", fmG(R.totalRec), R.rec.length + " encaissements", false, "vert", "₵") +
+    kpi("Dépenses", fmG(R.totalDep), R.dep.length + " opérations", false, "terre", "▤") +
+    kpi("Résultat", fmG(R.solde), R.solde >= 0 ? "excédent sur la période" : "déficit sur la période", R.solde < 0, "or", "◆") +
+    kpi("Élèves inscrits", ELS().length, impayes().length + " en impayé", false, "bleu", "☗") +
     '</div>';
 
   h += '<div class="grille g2">';
@@ -2488,7 +2512,7 @@ function vueRapports(){
       '<td style="width:34%"><div class="jauge"><span style="width:' + pct + '%"></span></div></td>' +
       '<td class="num" style="width:44px">' + pct + ' %</td></tr>';
   }).join("");
-  h += '<div class="carte"><div class="carte-t"><h3>Dépenses par poste</h3></div>' +
+  h += '<div class="carte h-terre"><div class="carte-t"><h3>Dépenses par poste</h3></div>' +
     '<div class="carte-c" style="padding:10px 6px">' +
     (lc ? '<table><tbody>' + lc + '</tbody></table>' : '<div class="vide">Aucune dépense sur la période.</div>') +
     '</div></div>';
@@ -2500,7 +2524,7 @@ function vueRapports(){
       '<td style="width:34%"><div class="jauge"><span style="width:' + pct + '%"></span></div></td>' +
       '<td class="num" style="width:44px">' + pct + ' %</td></tr>';
   }).join("");
-  h += '<div class="carte"><div class="carte-t"><h3>Recettes par mode de règlement</h3></div>' +
+  h += '<div class="carte h-vert"><div class="carte-t"><h3>Recettes par mode de règlement</h3></div>' +
     '<div class="carte-c" style="padding:10px 6px">' +
     (lmo ? '<table><tbody>' + lmo + '</tbody></table>' : '<div class="vide">Aucune recette sur la période.</div>') +
     '</div></div>';
@@ -2729,8 +2753,8 @@ function vueParametres(){
   h += '<div class="carte"><div class="carte-t"><h3>Données de démonstration</h3></div><div class="carte-c">' +
     '<p style="font-size:13.5px;color:var(--gris);margin-bottom:14px">Tout ce que vous saisissez reste dans ce navigateur, sur cet appareil. Rien n\'est envoyé sur internet. En production, les données seront centralisées et protégées par rôle.</p>' +
     '<div class="grille g2" style="margin-bottom:14px">' +
-      kpi("Élèves", ELS().length, "enregistrés", false, "bleu") +
-      kpi("Reçus", RECS().length, "émis", false, "vert") +
+      kpi("Élèves", ELS().length, "enregistrés", false, "bleu", "☗") +
+      kpi("Reçus", RECS().length, "émis", false, "vert", "₵") +
     '</div>' +
     '<button class="btn sec" onclick="exporterJson()">Exporter les données (JSON)</button> ' +
     '<button class="btn sec" style="color:var(--rouge);border-color:#E9C9C6" onclick="reinitialiser()">Réinitialiser la démonstration</button>' +
