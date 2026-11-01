@@ -56,6 +56,12 @@ a{color:var(--vert-clair)}
 .cx-centre b{display:block;font-size:13.5px;font-weight:650}
 .cx-centre small{color:var(--gris);font-size:11.5px}
 .cx-centre .coche{position:absolute;top:8px;right:9px;font-size:12px;color:var(--ok);display:none}
+.cx-centres{grid-auto-rows:1fr}
+.cx-centre.tous{grid-column:1 / -1;border-style:dashed}
+.cx-centre.tous .pin{background:var(--f-or-bg);color:var(--f-or)}
+.cx-centre.tous.on .pin{background:var(--vert);color:#fff}
+.cx-role.bloq{opacity:.4;filter:grayscale(.6)}
+.cx-role.bloq:hover{border-color:var(--bord);background:var(--blanc)}
 .cx-centre.on .coche{display:block}
 .cx-un{display:flex;align-items:center;gap:11px;border:1px solid var(--bord);border-radius:var(--r);
   padding:11px 12px;background:var(--or-fond)}
@@ -376,6 +382,10 @@ tbody tr:hover{background:#FAFAF7}
     <div id="cx-centres"></div>
     <div class="cx-trait"><span>Choisissez un profil</span></div>
     <div class="cx-roles" id="cx-roles"></div>
+    <div class="cx-note" id="cx-note-tous" style="display:none;margin-top:12px">
+      La vue d'ensemble est réservée à la direction. Les autres profils sont rattachés
+      à un seul centre et n'accèdent qu'à ses données.
+    </div>
     <div class="cx-note"><b>Plateforme de démonstration.</b> Les données sont fictives et restent dans ce navigateur. En production, chaque profil aura un compte nominatif et un mot de passe.</div>
     <div style="text-align:center;margin-top:14px">
       <button class="btn sec" id="btn-install" style="display:none" onclick="installer()">Installer sur cet appareil</button>
@@ -616,6 +626,7 @@ function jeuDemo(){
     ],
 
     journal:[],
+    demo:true,
     sequence:11,
     seqEleve:12
   };
@@ -662,6 +673,7 @@ function normaliser(){
   });
   if(!D.journal) D.journal = [];
   if(!D.centres || !D.centres.length) D.centres = jeuDemo().centres;
+  if(typeof D.demo !== "boolean") D.demo = true;
   if(!D.centreActif) D.centreActif = D.centres[0].id;
 }
 
@@ -808,16 +820,43 @@ function moisCourant(iso){
   return String(iso).slice(0,7) === new Date().toISOString().slice(0,7);
 }
 
-/* --- Centre actif : tout ce qui s'affiche passe par ces accès --- */
+/* --- Centre actif : tout ce qui s'affiche passe par ces accès ---
+   Le centre "*" est la vue consolidée : elle réunit tous les centres et
+   n'est ouverte qu'au directeur et à l'administrateur. Elle est en lecture
+   seule, parce qu'un enregistrement doit toujours appartenir à un centre. */
+var TOUS = "*";
+function estConsolide(){ return D.centreActif === TOUS; }
+function peutToutVoir(){ return U === "admin" || U === "directeur"; }
+
 function CT(){
+  if(estConsolide()){
+    var base = D.centres[0] || {};
+    return {id:TOUS, nom:"CENTRE RACHID — TOUS LES CENTRES", sousTitre:base.sousTitre || "",
+            tels:base.tels || "", ville:"tous les centres", annee:base.annee || ""};
+  }
   for(var i = 0; i < D.centres.length; i++) if(D.centres[i].id === D.centreActif) return D.centres[i];
   return D.centres[0];
+}
+function verrou(){
+  if(estConsolide()){
+    toast("Vue d'ensemble : lecture seule. Choisissez un centre pour saisir.");
+    return true;
+  }
+  return false;
+}
+function sansEcriture(h){ return estConsolide() ? "" : h; }
+function thC(){ return estConsolide() ? '<th>Centre</th>' : ""; }
+function tdC(x){
+  return estConsolide()
+    ? '<td><span class="et g">' + e(centreDe(x.c || "pita").ville) + '</span></td>'
+    : "";
 }
 function centreDe(id){
   for(var i = 0; i < D.centres.length; i++) if(D.centres[i].id === id) return D.centres[i];
   return D.centres[0];
 }
 function ac(a){
+  if(estConsolide()) return (a || []).slice();
   var r = [];
   for(var i = 0; i < (a || []).length; i++) if((a[i].c || "pita") === D.centreActif) r.push(a[i]);
   return r;
@@ -847,6 +886,7 @@ function nomDonateur(id){ var g = parId(D.donateurs, id); return g ? g.nom : "�
 function nomArticle(id){ var a = parId(D.stock, id); return a ? a.article : "—"; }
 
 function changerCentre(id){
+  if(id === TOUS && !peutToutVoir()){ toast("Ce profil est rattaché à un seul centre."); majEnteteCentre(); return; }
   D.centreActif = id;
   sauver();
   tracer("Changement de centre", centreDe(id).nom);
@@ -858,15 +898,16 @@ function changerCentre(id){
 function majEnteteCentre(){
   var el = document.getElementById("centre-actif");
   var r = document.getElementById("u-role");
-  if(r) r.textContent = "Centre de " + CT().ville;
+  if(r) r.textContent = estConsolide() ? "Vue d'ensemble" : ("Centre de " + CT().ville);
   if(!el) return;
-  if(D.centres.length < 2){ el.innerHTML = ""; return; }
-  var ok = (U === "admin" || U === "directeur");
-  if(!ok){ el.innerHTML = '<div class="ct-fixe">' + e(CT().ville) + '</div>'; return; }
+  if(D.centres.length < 2 && !estConsolide()){ el.innerHTML = ""; return; }
+  if(!peutToutVoir()){ el.innerHTML = '<div class="ct-fixe">' + e(CT().ville) + '</div>'; return; }
   el.innerHTML = '<select class="ct-sel" onchange="changerCentre(this.value)">' +
     D.centres.map(function(c){
       return '<option value="' + c.id + '"' + (c.id === D.centreActif ? " selected" : "") + '>' + e(c.ville) + '</option>';
-    }).join("") + '</select>';
+    }).join("") +
+    '<option value="' + TOUS + '"' + (estConsolide() ? " selected" : "") + '>Tous les centres</option>' +
+    '</select>';
 }
 
 /* ======================= CONNEXION ======================= */
@@ -876,11 +917,12 @@ function ecranConnexion(){
   Object.keys(ROLES).forEach(function(k){
     var r = ROLES[k];
     var n = (r.modules === "*") ? MODULES.length : r.modules.length;
-    h += '<button class="cx-role" onclick="connecter(\'' + k + '\')">' +
+    h += '<button class="cx-role" data-r="' + k + '" onclick="connecter(\'' + k + '\')">' +
          '<span class="cx-pastille">' + r.ini + '</span>' +
          '<span><b>' + e(r.nom) + '</b><small>' + n + ' module' + (n>1?"s":"") + ' accessible' + (n>1?"s":"") + '</small></span></button>';
   });
   document.getElementById("cx-roles").innerHTML = h;
+  majProfilsAccessibles();
 }
 
 /* Le centre se choisit avant le profil : on travaille dans un centre,
@@ -894,6 +936,7 @@ function ecranCentres(){
 
   if(D.centres.length === 1){
     var seul = D.centres[0];
+    if(estConsolide()){ D.centreActif = seul.id; sauver(); }
     if(lab) lab.textContent = "Centre";
     zone.innerHTML = '<div class="cx-un"><span class="pin">⌖</span>' +
       '<span><b>' + e(seul.nom) + '</b><small>Année scolaire ' + e(seul.annee) + '</small></span></div>';
@@ -912,7 +955,7 @@ function ecranCentres(){
     return;
   }
 
-  zone.innerHTML = D.centres.map(function(ct){
+  var cartes = D.centres.map(function(ct){
     var ne = D.eleves.filter(function(x){ return (x.c || "pita") === ct.id; }).length;
     var np = D.personnel.filter(function(x){ return (x.c || "pita") === ct.id; }).length;
     return '<button class="cx-centre' + (ct.id === D.centreActif ? " on" : "") + '" ' +
@@ -922,14 +965,39 @@ function ecranCentres(){
       '<span><b>' + e(ct.ville) + '</b><small>' + ne + ' élève' + (ne>1?"s":"") + ' · ' + np + ' employé' + (np>1?"s":"") + '</small></span>' +
       '</button>';
   }).join("");
+
+  cartes += '<button class="cx-centre tous' + (estConsolide() ? " on" : "") + '" ' +
+    'onclick="choisirCentre(\'' + TOUS + '\')">' +
+    '<span class="coche">●</span><span class="pin">◎</span>' +
+    '<span><b>Tous les centres</b><small>Direction seule · lecture seule</small></span></button>';
+
+  zone.innerHTML = cartes;
 }
 
 function choisirCentre(id){
   D.centreActif = id;
   sauver();
   ecranCentres();
+  majProfilsAccessibles();
+}
+
+/* Un profil rattaché à un seul centre ne peut pas entrer par la vue
+   d'ensemble : on le signale avant le clic plutôt qu'après. */
+function majProfilsAccessibles(){
+  var bs = document.querySelectorAll("#cx-roles .cx-role");
+  for(var i = 0; i < bs.length; i++){
+    var r = bs[i].getAttribute("data-r");
+    var bloque = estConsolide() && r !== "admin" && r !== "directeur";
+    bs[i].classList.toggle("bloq", bloque);
+  }
+  var n = document.getElementById("cx-note-tous");
+  if(n) n.style.display = estConsolide() ? "block" : "none";
 }
 function connecter(role){
+  if(D.centreActif === TOUS && role !== "admin" && role !== "directeur"){
+    toast("Ce profil est rattaché à un seul centre. Choisissez-en un.");
+    return;
+  }
   U = role;
   var r = ROLES[role];
   document.getElementById("u-nom").textContent = r.nom;
@@ -1028,9 +1096,18 @@ function vueTableau(){
 
   var h = tete("Tableau de bord", CT().ville + " — année scolaire " + CT().annee + " — " + dateLongue());
 
-  h += compterCentre(D.centreActif)
-    ? '<div class="bandeau"><b>Démonstration.</b> Les chiffres ci-dessous proviennent d\'un jeu de données fictif enregistré dans ce navigateur. Les boutons de remise à zéro sont dans Paramètres.</div>'
-    : '<div class="bandeau"><b>Base vierge.</b> Ce centre ne contient aucune donnée. Commencez par inscrire les élèves, puis enregistrez les premiers encaissements. Le jeu de démonstration se retrouve dans Paramètres.</div>';
+  if(estConsolide()){
+    h += '<div class="bandeau"><b>Vue d\'ensemble.</b> Les chiffres réunissent les ' + D.centres.length +
+         ' centres. Aucune saisie n\'est possible ici : un enregistrement appartient toujours à un centre. ' +
+         'Basculez sur un centre pour travailler.</div>';
+  }else if(!compterCentre(D.centreActif)){
+    h += '<div class="bandeau"><b>Base vierge.</b> Ce centre ne contient aucune donnée. ' +
+         'Commencez par inscrire les élèves, puis enregistrez les premiers encaissements. ' +
+         'Le jeu de démonstration se retrouve dans Paramètres.</div>';
+  }else if(D.demo){
+    h += '<div class="bandeau"><b>Démonstration.</b> Les chiffres ci-dessous proviennent d\'un jeu de données fictif ' +
+         'enregistré dans ce navigateur. Les boutons de remise à zéro sont dans Paramètres.</div>';
+  }
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
     kpi("Élèves inscrits", eleves.length, internes + " internes · " + (eleves.length - internes) + " semi-internes", false, "bleu", "☗") +
@@ -1107,6 +1184,31 @@ function vueTableau(){
   h += '<div class="carte h-or"><div class="carte-t"><h3>Alertes</h3></div><div class="carte-c" style="padding:6px 16px">' + al + '</div></div>';
   h += '</div>';
 
+  /* en vue d'ensemble, le directeur veut comparer ses centres avant tout */
+  if(estConsolide()){
+    var lc2 = D.centres.map(function(ct){
+      var rec = D.recus.filter(function(r){ return (r.c||"pita") === ct.id; }).reduce(function(a,r){ return a + r.montant; }, 0);
+      var dep = D.depenses.filter(function(d){ return (d.c||"pita") === ct.id; }).reduce(function(a,d){ return a + d.montant; }, 0);
+      var nbe = D.eleves.filter(function(x){ return (x.c||"pita") === ct.id; }).length;
+      var nbp = D.personnel.filter(function(x){ return (x.c||"pita") === ct.id; }).length;
+      var imp = D.eleves.filter(function(x){ return (x.c||"pita") === ct.id && paye(x.id) < x.frais; }).length;
+      var sol = rec - dep;
+      return '<tr><td><b>' + e(ct.ville) + '</b><br><small style="color:var(--gris)">' + e(ct.nom) + '</small></td>' +
+        '<td class="num">' + nbe + '</td><td class="num">' + nbp + '</td>' +
+        '<td class="num">' + fm(rec) + '</td><td class="num">' + fm(dep) + '</td>' +
+        '<td class="num"><b style="color:' + (sol >= 0 ? "var(--f-vert)" : "var(--rouge)") + '">' + fm(sol) + '</b></td>' +
+        '<td class="num">' + (imp ? '<span class="et a">' + imp + '</span>' : '<span class="et v">0</span>') + '</td>' +
+        '<td class="num"><button class="btn min sec" onclick="changerCentre(\'' + ct.id + '\')">Ouvrir</button></td></tr>';
+    }).join("");
+
+    h += '<div class="carte h-bleu" style="margin-top:14px"><div class="carte-t"><h3>Comparaison des centres</h3>' +
+      '<span style="font-size:12px;color:var(--gris)">depuis l\'ouverture</span></div>' +
+      '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
+      '<table><thead><tr><th>Centre</th><th class="num">Élèves</th><th class="num">Employés</th>' +
+      '<th class="num">Recettes</th><th class="num">Dépenses</th><th class="num">Solde</th>' +
+      '<th class="num">Impayés</th><th></th></tr></thead><tbody>' + lc2 + '</tbody></table></div></div>';
+  }
+
   /* équilibre du mois + répartition des dépenses, lisibles d'un coup d'œil */
   var maxi = Math.max(t.recettesMois, t.depensesMois, 1);
   var pr = Math.round(t.recettesMois / maxi * 100);
@@ -1167,7 +1269,7 @@ function vueCaisse(){
   var t = totaux();
   var recus = RECS();
   var h = tete("Caisse et reçus", "Encaissements de l'année " + CT().annee,
-    '<button class="btn" onclick="formRecu()">+ Nouveau reçu</button>');
+    sansEcriture('<button class="btn" onclick="formRecu()">+ Nouveau reçu</button>'));
 
   h += '<div class="grille g3" style="margin-bottom:14px">' +
     kpi("Total encaissé", fmG(t.recettes), recus.length + " reçus émis", false, "vert", "₵") +
@@ -1176,7 +1278,7 @@ function vueCaisse(){
     '</div>';
 
   var lignes = recus.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; }).map(function(r){
-    return '<tr><td><b>' + e(r.no) + '</b></td><td>' + dateFr(r.date) + '</td>' +
+    return '<tr><td><b>' + e(r.no) + '</b></td>' + tdC(r) + '<td>' + dateFr(r.date) + '</td>' +
       '<td>' + e(r.payeur) + (r.eleve ? '<br><small style="color:var(--gris)">' + e(nomEleve(r.eleve)) + '</small>' : "") + '</td>' +
       '<td>' + e(r.motif) + '</td>' +
       '<td><span class="et g">' + e(r.mode) + '</span></td>' +
@@ -1186,12 +1288,13 @@ function vueCaisse(){
   }).join("");
 
   h += '<div class="carte h-vert"><div class="carte-t"><h3>Journal des reçus</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
-    (lignes ? '<table><thead><tr><th>N°</th><th>Date</th><th>Payeur</th><th>Motif</th><th>Mode</th><th class="num">Montant</th><th></th></tr></thead><tbody>' + lignes + '</tbody></table>'
+    (lignes ? '<table><thead><tr><th>N°</th>' + thC() + '<th>Date</th><th>Payeur</th><th>Motif</th><th>Mode</th><th class="num">Montant</th><th></th></tr></thead><tbody>' + lignes + '</tbody></table>'
             : '<div class="vide">Aucun reçu enregistré.</div>') + '</div></div>';
   return h;
 }
 
 function formRecu(){
+  if(verrou()) return;
   var opts = '<option value="">— Aucun élève rattaché (don, autre) —</option>' +
     ELS().map(function(el){
       return '<option value="' + el.id + '">' + e(el.prenom + " " + el.nom + " (" + el.classe + ")") + '</option>';
@@ -1349,7 +1452,7 @@ function htmlRecu(r){
 function vueDepenses(){
   var t = totaux();
   var h = tete("Dépenses", "Sorties de caisse de l'année " + CT().annee,
-    '<button class="btn" onclick="formDepense()">+ Nouvelle dépense</button>');
+    sansEcriture('<button class="btn" onclick="formDepense()">+ Nouvelle dépense</button>'));
 
   var deps = DEPS();
   var parCat = {};
@@ -1363,7 +1466,7 @@ function vueDepenses(){
     '</div>';
 
   var lignes = deps.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; }).map(function(d){
-    return '<tr><td>' + dateFr(d.date) + '</td><td><span class="et g">' + e(d.categorie) + '</span></td>' +
+    return '<tr><td>' + dateFr(d.date) + '</td>' + tdC(d) + '<td><span class="et g">' + e(d.categorie) + '</span></td>' +
       '<td>' + e(d.libelle) + '</td><td>' + e(d.fournisseur) + '</td>' +
       '<td><span class="et g">' + e(d.mode) + '</span></td>' +
       '<td class="num"><b>' + fm(d.montant) + '</b></td>' +
@@ -1371,11 +1474,12 @@ function vueDepenses(){
   }).join("");
 
   h += '<div class="carte h-terre"><div class="carte-t"><h3>Journal des dépenses</h3></div><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
-    (lignes ? '<table><thead><tr><th>Date</th><th>Catégorie</th><th>Libellé</th><th>Fournisseur</th><th>Mode</th><th class="num">Montant</th><th></th></tr></thead><tbody>' + lignes + '</tbody></table>'
+    (lignes ? '<table><thead><tr><th>Date</th>' + thC() + '<th>Catégorie</th><th>Libellé</th><th>Fournisseur</th><th>Mode</th><th class="num">Montant</th><th></th></tr></thead><tbody>' + lignes + '</tbody></table>'
             : '<div class="vide">Aucune dépense enregistrée.</div>') + '</div></div>';
   return h;
 }
 function formDepense(){
+  if(verrou()) return;
   var corps =
     '<div class="ligne">' +
       '<div class="champ"><label>Date</label><input type="date" id="d-date" value="' + aujourdhui() + '"></div>' +
@@ -1417,7 +1521,7 @@ function enregistrerDepense(){
 /* ======================= ÉLÈVES ======================= */
 function vueEleves(){
   var h = tete("Élèves", ELS().length + " élèves inscrits — " + CT().ville + ", année " + CT().annee,
-    '<button class="btn" onclick="formEleve()">+ Inscrire un élève</button>');
+    sansEcriture('<button class="btn" onclick="formEleve()">+ Inscrire un élève</button>'));
 
   h += '<div class="recherche">' +
     '<input id="rch" placeholder="Rechercher un nom, un tuteur, une classe…" oninput="filtrerEleves()">' +
@@ -1427,7 +1531,7 @@ function vueEleves(){
     '</select></div>';
 
   h += '<div class="carte"><div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
-    '<table><thead><tr><th>Élève</th><th>Classe</th><th>Statut</th><th>Tuteur</th>' +
+    '<table><thead><tr><th>Élève</th>' + thC() + '<th>Classe</th><th>Statut</th><th>Tuteur</th>' +
     '<th class="num">Frais convenus</th><th class="num">Payé</th><th>Situation</th><th></th></tr></thead>' +
     '<tbody id="tb-eleves"></tbody></table></div></div>';
 
@@ -1450,14 +1554,14 @@ function filtrerEleves(){
            : (p > 0 ? '<span class="et a">Reste ' + fm(reste) + '</span>'
                     : '<span class="et r">Non payé</span>');
     return '<tr><td><b>' + e(el.prenom + " " + el.nom) + '</b><br><small style="color:var(--gris)">' + e(el.id) + '</small></td>' +
-      '<td>' + e(el.classe) + '</td>' +
+      tdC(el) + '<td>' + e(el.classe) + '</td>' +
       '<td><span class="et ' + (el.statut === "interne" ? "v" : "g") + '">' + e(el.statut) + '</span></td>' +
       '<td>' + e(el.tuteur) + '<br><small style="color:var(--gris)">' + e(el.tel) + '</small></td>' +
       '<td class="num">' + fm(el.frais) + '</td><td class="num">' + fm(p) + '</td><td>' + et + '</td>' +
       '<td><div class="actions"><button class="btn min sec" onclick="ficheEleve(\'' + el.id + '\')">Fiche</button>' +
       btnSuppr('supprimerEleve(\'' + el.id + '\')') + '</div></td></tr>';
   }).join("");
-  document.getElementById("tb-eleves").innerHTML = h || '<tr><td colspan="8" class="vide">Aucun élève ne correspond à cette recherche.</td></tr>';
+  document.getElementById("tb-eleves").innerHTML = h || '<tr><td colspan="9" class="vide">Aucun élève ne correspond à cette recherche.</td></tr>';
 }
 
 function ficheEleve(id){
@@ -1503,6 +1607,7 @@ function ficheEleve(id){
 }
 
 function formEleve(){
+  if(verrou()) return;
   var corps =
     '<div class="ligne">' +
       '<div class="champ"><label>Prénom</label><input id="e-prenom"></div>' +
@@ -1552,7 +1657,7 @@ function enregistrerEleve(){
 /* ======================= MÉMORISATION ======================= */
 function vueCoran(){
   var h = tete("Suivi de la mémorisation", "Sourates, pages, tajwid et évaluations",
-    '<button class="btn" onclick="formMemo()">+ Enregistrer une récitation</button>');
+    sansEcriture('<button class="btn" onclick="formMemo()">+ Enregistrer une récitation</button>'));
 
   var mem = MEMS();
   var moy = mem.reduce(function(a,m){ return a + m.note; }, 0) / (mem.length || 1);
@@ -1577,6 +1682,7 @@ function vueCoran(){
   return h;
 }
 function formMemo(){
+  if(verrou()) return;
   var corps =
     '<div class="champ"><label>Élève</label><select id="m-eleve">' +
       ELS().map(function(el){ return '<option value="' + el.id + '">' + e(el.prenom + " " + el.nom + " — " + el.classe) + '</option>'; }).join("") +
@@ -1621,7 +1727,7 @@ function vueStock(){
   var stk = STK();
   var valeur = stk.reduce(function(a,s){ return a + s.qte * s.prix; }, 0);
   var h = tete("Stock et magasin", stk.length + " articles suivis",
-    '<button class="btn" onclick="formMouvement()">+ Mouvement de stock</button>');
+    sansEcriture('<button class="btn" onclick="formMouvement()">+ Mouvement de stock</button>'));
 
   h += '<div class="grille g3" style="margin-bottom:14px">' +
     kpi("Articles suivis", stk.length, uniq(stk.map(function(s){ return s.categorie; })).length + " catégories", false, "terre", "▥") +
@@ -1644,6 +1750,7 @@ function vueStock(){
   return h;
 }
 function formMouvement(){
+  if(verrou()) return;
   var corps =
     '<div class="champ"><label>Article</label><select id="s-art">' +
       STK().map(function(s){ return '<option value="' + s.id + '">' + e(s.article + " (" + s.qte + " " + s.unite + ")") + '</option>'; }).join("") +
@@ -1694,9 +1801,9 @@ function vuePersonnel(){
   });
 
   var h = tete("Personnel", pers.length + " employés — " + CT().ville,
-    '<button class="btn sec" onclick="formAbsence()">Absence ou congé</button> ' +
+    sansEcriture('<button class="btn sec" onclick="formAbsence()">Absence ou congé</button> ' +
     '<button class="btn sec" onclick="formPaie()">Payer un salaire</button> ' +
-    '<button class="btn" onclick="formEmploye()">+ Nouvel employé</button>');
+    '<button class="btn" onclick="formEmploye()">+ Nouvel employé</button>'));
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
     kpi("Effectif actif", pers.filter(function(p){ return p.statut === "actif"; }).length, uniq(pers.map(function(p){ return p.type; })).length + " catégories", false, "bleu", "⚑") +
@@ -1710,7 +1817,7 @@ function vuePersonnel(){
     for(var i = 0; i < payesCeMois.length; i++) if(payesCeMois[i].personnel === p.id) paye = payesCeMois[i];
     var nbAbs = abs.filter(function(a){ return a.personnel === p.id; }).length;
     return '<tr><td><b>' + e(p.nom) + '</b><br><small style="color:var(--gris)">' + e(p.tel) + '</small></td>' +
-      '<td>' + e(p.poste) + '<br><small style="color:var(--gris)">depuis le ' + dateFr(p.embauche) + '</small></td>' +
+      tdC(p) + '<td>' + e(p.poste) + '<br><small style="color:var(--gris)">depuis le ' + dateFr(p.embauche) + '</small></td>' +
       '<td><span class="et g">' + e(p.type) + '</span></td>' +
       '<td class="num">' + fm(p.salaire) + '</td>' +
       '<td class="num">' + (nbAbs ? nbAbs : "—") + '</td>' +
@@ -1721,7 +1828,7 @@ function vuePersonnel(){
 
   h += '<div class="carte h-bleu"><div class="carte-t"><h3>Dossiers du personnel</h3></div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
-    (lignes ? '<table><thead><tr><th>Employé</th><th>Poste</th><th>Catégorie</th><th class="num">Salaire</th>' +
+    (lignes ? '<table><thead><tr><th>Employé</th>' + thC() + '<th>Poste</th><th>Catégorie</th><th class="num">Salaire</th>' +
       '<th class="num">Absences</th><th>Salaire du mois</th><th></th></tr></thead><tbody>' + lignes + '</tbody></table>'
             : '<div class="vide">Aucun employé enregistré.</div>') + '</div></div>';
 
@@ -1784,6 +1891,7 @@ function moisFr(m){
 }
 
 function formEmploye(){
+  if(verrou()) return;
   var corps =
     '<div class="champ"><label>Nom complet</label><input id="x-nom" placeholder="Thierno Mamadou Saliou Diallo"></div>' +
     '<div class="ligne">' +
@@ -1824,6 +1932,7 @@ function optionsPersonnel(sel){
 }
 
 function formAbsence(){
+  if(verrou()) return;
   var corps =
     '<div class="champ"><label>Employé</label><select id="b-pers">' + optionsPersonnel() + '</select></div>' +
     '<div class="ligne">' +
@@ -1856,6 +1965,7 @@ function enregistrerAbsence(){
 }
 
 function formPaie(sel){
+  if(verrou()) return;
   var m = new Date().toISOString().slice(0,7);
   var corps =
     '<div class="champ"><label>Employé</label><select id="y-pers" onchange="majPaie()">' + optionsPersonnel(sel) + '</select></div>' +
@@ -1920,8 +2030,8 @@ function vueInternat(){
   var dernier = appels.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; })[0];
 
   var h = tete("Internat", internes.length + " pensionnaires — " + CT().ville,
-    '<button class="btn sec" onclick="formAppel()">Appel du soir</button> ' +
-    '<button class="btn" onclick="formIncident()">+ Signaler un incident</button>');
+    sansEcriture('<button class="btn sec" onclick="formAppel()">Appel du soir</button> ' +
+    '<button class="btn" onclick="formIncident()">+ Signaler un incident</button>'));
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
     kpi("Pensionnaires", internes.length, "élèves internes", false, "terre", "⌂") +
@@ -1944,7 +2054,7 @@ function vueInternat(){
   }).join("");
 
   h += '<div class="carte h-terre"><div class="carte-t"><h3>Chambres et affectations</h3>' +
-    '<button class="btn min sec" onclick="formAffectation()">Affecter un élève</button></div>' +
+    sansEcriture('<button class="btn min sec" onclick="formAffectation()">Affecter un élève</button>') + '</div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
     (lignes ? '<table><thead><tr><th>Chambre</th><th class="num">Occupation</th><th>Pensionnaires</th><th>État</th><th></th></tr></thead><tbody>' + lignes + '</tbody></table>'
             : '<div class="vide">Aucune chambre enregistrée.</div>') + '</div></div>';
@@ -1960,7 +2070,7 @@ function vueInternat(){
     ai += '<div class="alerte-l a-' + p + '"><span class="puce ' + p + '"></span><div><b>' + e(i.type) + ' — ' + e(nomEleve(i.eleve)) + '</b>' +
       '<small>' + dateFr(i.date) + " · " + e(i.description) + '</small>' +
       '<small style="color:var(--vert-clair)">Suite : ' + e(i.suite) + '</small></div>' +
-      (peutSupprimer() ? '<button class="btn min sup" style="margin-left:auto" title="Supprimer" onclick="supprimerIncident(\'' + i.id + '\')">✕</button>' : "") +
+      (peutSupprimer() && !estConsolide() ? '<button class="btn min sup" style="margin-left:auto" title="Supprimer" onclick="supprimerIncident(\'' + i.id + '\')">✕</button>' : "") +
       '</div>';
   });
   if(!ai) ai = '<div class="vide">Aucun incident signalé.</div>';
@@ -1984,6 +2094,7 @@ function vueInternat(){
 }
 
 function formAffectation(){
+  if(verrou()) return;
   var internes = ELS().filter(function(x){ return x.statut === "interne"; });
   if(!internes.length){ toast("Aucun élève interne à affecter."); return; }
   var corps =
@@ -2022,6 +2133,7 @@ function enregistrerAffectation(){
 }
 
 function formIncident(){
+  if(verrou()) return;
   var internes = ELS().filter(function(x){ return x.statut === "interne"; });
   var corps =
     '<div class="champ"><label>Pensionnaire concerné</label><select id="i-el">' +
@@ -2053,6 +2165,7 @@ function enregistrerIncident(){
 }
 
 function formAppel(){
+  if(verrou()) return;
   var internes = ELS().filter(function(x){ return x.statut === "interne"; });
   var corps =
     '<div class="champ"><label>Date de l\'appel</label><input type="date" id="n-date" value="' + aujourdhui() + '"></div>' +
@@ -2115,8 +2228,8 @@ function vueCuisine(){
   var coutJour = jours.length ? cout / jours.length : 0;
 
   var h = tete("Cuisine et restauration", "Menus, denrées consommées et coût réel des repas",
-    '<button class="btn sec" onclick="formSortieCuisine()">Sortie de denrées</button> ' +
-    '<button class="btn" onclick="formMenu()">+ Planifier un repas</button>');
+    sansEcriture('<button class="btn sec" onclick="formSortieCuisine()">Sortie de denrées</button> ' +
+    '<button class="btn" onclick="formMenu()">+ Planifier un repas</button>'));
 
   h += '<div class="bandeau"><b>Lecture du coût.</b> Les montants ci-dessous ne sont pas saisis : ils sont calculés à partir des denrées réellement sorties du magasin vers la cuisine, valorisées au prix d\'achat. Si les sorties ne sont pas saisies chaque jour, ces chiffres perdent leur sens.</div>';
 
@@ -2177,6 +2290,7 @@ function vueCuisine(){
 }
 
 function formMenu(){
+  if(verrou()) return;
   var corps =
     '<div class="ligne">' +
       '<div class="champ"><label>Date</label><input type="date" id="u-date" value="' + aujourdhui() + '"></div>' +
@@ -2205,6 +2319,7 @@ function enregistrerMenu(){
 }
 
 function formSortieCuisine(){
+  if(verrou()) return;
   var denrees = STK().filter(function(s){ return s.categorie === "Alimentation"; });
   if(!denrees.length){ toast("Aucune denrée alimentaire en magasin."); return; }
   var corps =
@@ -2247,8 +2362,8 @@ function vueDons(){
   var attendu = Math.max(0, engage - recuCeMois);
 
   var h = tete("Dons et parrainages", gs.length + " donateurs et parrains",
-    '<button class="btn sec" onclick="formDonateur()">+ Donateur</button> ' +
-    '<button class="btn" onclick="formDon()">+ Enregistrer un don</button>');
+    sansEcriture('<button class="btn sec" onclick="formDonateur()">+ Donateur</button> ' +
+    '<button class="btn" onclick="formDon()">+ Enregistrer un don</button>'));
 
   h += '<div class="grille g4" style="margin-bottom:14px">' +
     kpi("Total reçu", fmG(recu), xs.length + " versements", false, "vert", "♥") +
@@ -2322,6 +2437,7 @@ function ficheDonateur(id){
 }
 
 function formDonateur(){
+  if(verrou()) return;
   var corps =
     '<div class="champ"><label>Nom du donateur ou de l\'institution</label><input id="g-nom"></div>' +
     '<div class="ligne">' +
@@ -2353,6 +2469,7 @@ function enregistrerDonateur(){
 }
 
 function formDon(sel){
+  if(verrou()) return;
   var gs = DONAT();
   if(!gs.length){ toast("Créez d'abord une fiche donateur."); return; }
   var corps =
@@ -2418,12 +2535,13 @@ function enregistrerDon(){
 function peutSupprimer(){ return U === "admin" || U === "directeur"; }
 
 function btnSuppr(appel){
-  if(!peutSupprimer()) return "";
+  if(!peutSupprimer() || estConsolide()) return "";
   return '<button class="btn min sup" title="Supprimer" onclick="' + appel + '">✕</button>';
 }
 
 var _aSupprimer = null;
 function demanderSuppression(titre, message, note, action){
+  if(estConsolide()){ verrou(); return; }
   if(!peutSupprimer()){ toast("Ce profil ne peut pas supprimer."); return; }
   _aSupprimer = action;
   ouvrirModale(titre,
@@ -2716,6 +2834,7 @@ function viderCentre(){
       COLLECTIONS.forEach(function(k){
         oterSi(k, function(x){ return (x.c || "pita") === ct.id; });
       });
+      D.demo = false;
       tracer("Vidage d'un centre", ct.nom + " — " + n + " enregistrements");
       sauver(); toast("Centre vidé."); aller("parametres");
     });
@@ -2729,6 +2848,7 @@ function toutAZero(){
     function(){
       COLLECTIONS.forEach(function(k){ D[k] = []; });
       D.journal = [];
+      D.demo = false;
       D.sequence = 0;
       D.seqEleve = 0;
       tracer("Remise à zéro complète", n + " enregistrements effacés");
@@ -3142,8 +3262,8 @@ function vueParametres(){
     ligneEcart("Parents", "Non gérée", "Notification des échéances et des impayés par SMS ou WhatsApp") +
     '</tbody></table></div></div>';
 
-  h += '<div class="carte" style="margin-top:14px"><div class="carte-t"><h3>Centres gérés</h3>' +
-    '<button class="btn min sec" onclick="formCentre()">+ Ajouter un centre</button></div>' +
+  h += '<div class="carte h-bleu" style="margin-top:14px"><div class="carte-t"><h3>Centres gérés</h3>' +
+    '<button class="btn min" onclick="formCentre()">+ Ajouter un centre</button></div>' +
     '<div class="carte-c" style="padding:10px 6px;overflow-x:auto">' +
     '<table><thead><tr><th>Centre</th><th>Ville</th><th class="num">Élèves</th><th class="num">Personnel</th>' +
     '<th>État</th><th></th></tr></thead><tbody>' +
@@ -3157,7 +3277,9 @@ function vueParametres(){
           '<button class="btn min sec" onclick="changerCentre(\'' + ct.id + '\')">Basculer</button>' +
           (D.centres.length > 1 ? btnSuppr('supprimerCentre(\'' + ct.id + '\')') : "")) + '</div></td></tr>';
     }).join("") + '</tbody></table>' +
-    '<div class="apercu" style="margin:12px 10px 2px">Chaque enregistrement — élève, reçu, dépense, article — porte l\'identifiant de son centre. Basculez d\'un centre à l\'autre pour vérifier qu\'aucune donnée ne traverse.</div>' +
+    '<div class="apercu" style="margin:12px 10px 2px"><b>Ajouter un centre :</b> le bouton « + Ajouter un centre » ci-dessus. ' +
+    'Nom, ville, téléphones et année scolaire suffisent ; le centre démarre vide et apparaît aussitôt au choix de la page d\'accueil. ' +
+    'Chaque enregistrement — élève, reçu, dépense, article — porte l\'identifiant de son centre, et seule la direction voit les autres centres.</div>' +
     '</div></div>';
   return h;
 }
@@ -3182,6 +3304,7 @@ function exporterJson(){
 }
 
 function formCentre(){
+  if(verrou()) return;
   var corps =
     '<div class="champ"><label>Nom du centre</label><input id="z-nom" placeholder="CENTRE RACHID DE DALABA"></div>' +
     '<div class="ligne">' +
